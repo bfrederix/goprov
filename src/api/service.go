@@ -2,7 +2,7 @@ package api
 
 
 import (
-	"goapi/src/github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 	"strconv"
 	"appengine"
     "appengine/datastore"

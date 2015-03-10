@@ -1,0 +1,29 @@
+{{define "base_header"}}
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta property="og:image" content="{{.ImagePath}}adventure-prov_profile_pic.jpg" />
+    <meta property="og:title" content="Adventure-prov" />
+    <meta property="og:description" content="An improvised show that lets you decide the action with mobile voting!" />
+    <meta name="Description" CONTENT="An improvised show with live mobile voting, leaderboards, and prizes!">
+    <link rel="image_src" href="{{.ImagePath}}adventure-prov_profile_pic.jpg" />
+	<link rel="apple-touch-icon" href="apple-touch-icon.png">
+	<link href="{{.CSSPath}}bootstrap.min.css" rel="stylesheet" media="screen">
+  	<link rel="stylesheet" type="text/css" href="{{.CSSPath}}base.css">
+
+  	<script src="{{.JSPath}}jquery-1.11.0.min.js"></script>
+  	<script src="{{.JSPath}}bootstrap.min.js"></script>
+  	<script>
+        $( document ).ready(function() {
+            $('#Logout').click(function() {
+                FB.logout(function () { document.location.reload(); });
+                $.ajax({
+                    url: '/session_logout/',
+                    data: {"logout": true},
+                    type: 'post',
+                    async: false,
+                    success: function(result){}
+                });
+            });
+  	    });
+    </script>
+{{ end }}

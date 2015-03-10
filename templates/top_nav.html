@@ -1,0 +1,72 @@
+{{define "top_nav"}}
+    <nav id="top-nav-bar" class="navbar navbar-inverse" role="navigation">
+        <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">Adventure-prov</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        Leaderboards <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/leaderboards/"><strong>All-time Leaderboard</strong></a></li>
+                        <li><a href="/medals/"><strong>Medals</strong></a></li>
+                    </ul>
+                </li>
+                <li><a href="/recap/">Show Recaps</a></li>
+                {{ if .User ne nil }}
+                    <li><a href="/user/">My Account</a></li>
+                {{ end }}
+                {{ if .User.Admin true }}
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            Admin <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/pre_show/">Pre-show Instructions</a></li>
+                            <li><a href="/create_show/">Create Show</a></li>
+                            <li><a href="/vote_types/">Add/Delete Vote Types</a></li>
+                            <li><a href="/suggestion_pools/">Add/Delete Suggestion Pools</a></li>
+                            <li><a href="/create_medals/">Add/Delete Medals</a></li>
+                            <li><a href="/add_players/">Add Players</a></li>
+                            <li><a href="/delete_tools/">Delete Tools</a></li>
+                            <li><a href="/interval_timer/">Interval Timer</a></li>
+                            <li><a href="/js_test/">Test JS</a></li>
+                            <li><a href="/export_emails/">Export e-mails</a></li>
+                        </ul>
+                    </li>
+                {{ end }}
+              </ul>
+              <ul class="nav navbar-nav navbar-right">
+                {{ if .AuthAction eq "Login" }}
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            Login <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#" onclick="facebook_login();"><div class="facebook-icon-small pull-left"></div>&nbsp;<strong>Login with Facebook</strong></a></li>
+                            <li><a id="{{.AuthAction}}" href="{{.AuthURL}}"><div class="google-icon-small pull-left"></div>&nbsp;<strong>Login with Google</strong></a></li>
+                        </ul>
+                    </li>
+                {{ else }}
+                    <li><a id="{{.AuthAction}}" href="{{.AuthURL}}">{{.AuthAction}}</a></li>
+                {{ end }}
+              </ul>
+              {{ if .User ne nil }}
+                <p class="navbar-text navbar-right">{{.Username}}</p>
+              {{ end }}
+            </div>
+        </div>
+    </nav>
+{{ end }}
