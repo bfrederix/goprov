@@ -25,10 +25,10 @@
                     </ul>
                 </li>
                 <li><a href="/recap/">Show Recaps</a></li>
-                {{ if .User ne nil }}
+                {{ if .UserID ne nil }}
                     <li><a href="/user/">My Account</a></li>
                 {{ end }}
-                {{ if .User.Admin true }}
+                {{ if .IsAdmin true }}
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             Admin <span class="caret"></span>
@@ -63,7 +63,7 @@
                     <li><a id="{{.AuthAction}}" href="{{.AuthURL}}">{{.AuthAction}}</a></li>
                 {{ end }}
               </ul>
-              {{ if .User ne nil }}
+              {{ if .UserID ne nil }}
                 <p class="navbar-text navbar-right">{{.Username}}</p>
               {{ end }}
             </div>

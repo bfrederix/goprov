@@ -1,11 +1,11 @@
 {{define "home"}}
     <html>
       <head>
-          {{template "base_header"}}
+          {{template "base_header" .}}
           <title>Adventure-prov Home</title>
       <body>
         <!-- Add facebook_sdk -->
-        {{template "top_nav"}}
+        {{template "top_nav" .}}
         <p>You wrote:</p>
         <pre>{{.User.Admin}}</pre>
         <pre>{{.AuthAction}}</pre>
