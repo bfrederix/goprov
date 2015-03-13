@@ -44,36 +44,39 @@ func GetEntityKeyByURLIDs(rw http.ResponseWriter, r *http.Request, modelType str
 }
 
 
-func GetModelEntities(rw http.ResponseWriter, r *http.Request, modelType string, limit int) (appengine.Context, *datastore.Query) {
+func GetModelEntities(rw http.ResponseWriter, r *http.Request, modelType string, limit int, params map[string]interface{}) (appengine.Context, *datastore.Query) {
 	c := appengine.NewContext(r)
 	q := datastore.NewQuery(modelType)
-	queryParams := r.URL.Query()
-	log.Println("Query Params: ", queryParams)
+	log.Println("Query Params: ", params)
 	// If empty query parameters, return the full query results
-	if queryParams == nil {
+	if params == nil {
 		return c, q
 	}
 	// If a name was specified
-	if name, ok := queryParams["name"]; ok {
+	if name, ok := params["name"]; ok {
 		log.Println("Query Name!")
-		q = q.Filter("name =", name[0])
+		q = q.Filter("name =", name)
+	}
+	// If a session id was specified
+	if sessionID, ok := params["id"]; ok {
+		q = q.Filter("current_session =", sessionID)
 	}
 	// If a show id/key was specified
-	if showID, ok := queryParams["show"]; ok {
-		showKey := GetEntityKeyByIDs(c, "Show", showID[0])
+	if showID, ok := params["show"]; ok {
+		showKey := GetEntityKeyByIDs(c, "Show", showID.(string))
 		q = q.Filter("show =", showKey)
 	}
 	// If archived was specified
-	if queryParams["archived"] != nil {
-		archived, err := strconv.ParseBool(queryParams["archived"][0])
+	if params["archived"] != nil {
+		archived, err := strconv.ParseBool(params["archived"].(string))
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 		q = q.Filter("archived =", archived)
 	}
 	// If ordering on created date was specified
-	if queryParams["order_by_created"] != nil {
-		orderByCreated, err := strconv.ParseBool(queryParams["order_by_created"][0])
+	if params["order_by_created"] != nil {
+		orderByCreated, err := strconv.ParseBool(params["order_by_created"].(string))
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
@@ -90,13 +93,26 @@ func GetModelEntities(rw http.ResponseWriter, r *http.Request, modelType string,
 }
 
 
+func WebQueryEntities(rw http.ResponseWriter, r *http.Request, modelType string, limit int) (appengine.Context, *datastore.Query) {
+	queryParams := r.URL.Query()
+	params := make(map[string]interface{}, len(queryParams))
+	if queryParams != nil {
+		for k, v := range queryParams {
+			params[k] = v[0]
+		}
+	}
+	c, q := GetModelEntities(rw, r, modelType, limit, params)
+	return c, q
+}
+
+
 // Need to add a new function that can create the query
 // With just context and queryParams so that we can use it for setting properties
 
 ///////////////////////// Single Item Get /////////////////////////////////
 
 
-func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool) (Player) {
+func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (Player) {
 	if hasID == true {
 		var player Player
 		c, playerKey := GetEntityKeyByURLIDs(rw, r, "Player")
@@ -110,7 +126,16 @@ func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool) (Player) {
 		return player
 	} else {
 		var players []Player
-		c, q := GetModelEntities(rw, r, "Player", 1)
+		var c appengine.Context
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			c, q = GetModelEntities(rw, r, "Player", 1, params)
+		} else {
+			// Otherwise use query params from url
+			c, q = WebQueryEntities(rw, r, "Player", 1)
+		}
+
 		if _, err := q.GetAll(c, &players); err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
@@ -121,7 +146,7 @@ func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool) (Player) {
 }
 
 
-func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool) (UserProfile) {
+func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (UserProfile) {
 	if hasID == true {
 		var userProfile UserProfile
 		c, userProfileKey := GetEntityKeyByURLIDs(rw, r, "UserProfile")
@@ -135,7 +160,16 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool) (UserPr
 		return userProfile
 	} else {
 		var userProfiles []UserProfile
-		c, q := GetModelEntities(rw, r, "UserProfile", 1)
+		var c appengine.Context
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			c, q = GetModelEntities(rw, r, "UserProfile", 1, params)
+		} else {
+			// Otherwise use query params from url
+			c, q = WebQueryEntities(rw, r, "UserProfile", 1)
+		}
+
 		if _, err := q.GetAll(c, &userProfiles); err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
@@ -149,8 +183,16 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool) (UserPr
 ///////////////////////// Multiple Item Queries ////////////////////////////
 
 
-func GetPlayers(rw http.ResponseWriter, r *http.Request) ([]Player) {
-	c, q := GetModelEntities(rw, r, "Player", 0)
+func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]Player) {
+	var c appengine.Context
+	var q *datastore.Query
+	// If parameters were specified
+	if params != nil {
+		c, q = GetModelEntities(rw, r, "Player", 0, params)
+	} else {
+		// Otherwise use query params from url
+		c, q = WebQueryEntities(rw, r, "Player", 1)
+	}
 	var players []Player
 	if _, err := q.GetAll(c, &players); err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -164,8 +206,16 @@ func GetPlayers(rw http.ResponseWriter, r *http.Request) ([]Player) {
 }
 
 
-func GetShows(rw http.ResponseWriter, r *http.Request) ([]Show) {
-	c, q := GetModelEntities(rw, r, "Show", 0)
+func GetShows(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]Show) {
+	var c appengine.Context
+	var q *datastore.Query
+	// If parameters were specified
+	if params != nil {
+		c, q = GetModelEntities(rw, r, "Show", 0, params)
+	} else {
+		// Otherwise use query params from url
+		c, q = WebQueryEntities(rw, r, "Show", 1)
+	}
 	var shows []Show
 	if _, err := q.GetAll(c, &shows); err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -175,8 +225,16 @@ func GetShows(rw http.ResponseWriter, r *http.Request) ([]Show) {
 }
 
 
-func GetLeaderboardEntries(rw http.ResponseWriter, r *http.Request) ([]LeaderboardEntry) {
-	c, q := GetModelEntities(rw, r, "LeaderboardEntry", 0)
+func GetLeaderboardEntries(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]LeaderboardEntry) {
+	var c appengine.Context
+	var q *datastore.Query
+	// If parameters were specified
+	if params != nil {
+		c, q = GetModelEntities(rw, r, "LeaderboardEntry", 0, params)
+	} else {
+		// Otherwise use query params from url
+		c, q = WebQueryEntities(rw, r, "LeaderboardEntry", 1)
+	}
 	var leaderboardEntries []LeaderboardEntry
 	if _, err := q.GetAll(c, &leaderboardEntries); err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
