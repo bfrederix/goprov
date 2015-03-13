@@ -8,11 +8,11 @@ import (
 )
 
 type Player struct {
-	Name          string    `datastore:"name" json:"name"`
-	PhotoFilename string    `datastore:"photo_filename,noindex" json:"photo_filename"`
-	Star          bool      `datastore:"star" json:"star"`
-	DateAdded     time.Time `datastore:"date_added" json:"date_added"`
-	IMGPath       string    `json:"img_path"`
+	Name          string    `datastore:"name" json:"name,omitempty"`
+	PhotoFilename string    `datastore:"photo_filename,noindex" json:"photo_filename,omitempty"`
+	Star          bool      `datastore:"star" json:"star,omitempty"`
+	DateAdded     time.Time `datastore:"date_added" json:"-"`
+	IMGPath       string    `json:"img_path,omitempty"`
 }
 
 
@@ -22,126 +22,126 @@ func (p *Player) SetProperties() {
 
 
 type SuggestionPool struct {
-	Name          string    `datastore:"name" json:"name"`
-	DisplayName   string    `datastore:"display_name" json:"display_name"`
-	Description   string    `datastore:"description" json:"description"`
-	Created       time.Time `datastore:"created" json:"created"`
+	Name          string    `datastore:"name" json:"name,omitempty"`
+	DisplayName   string    `datastore:"display_name" json:"display_name,omitempty"`
+	Description   string    `datastore:"description" json:"description,omitempty"`
+	Created       time.Time `datastore:"created" json:"created,omitempty"`
 }
 
 
 type VoteType struct {
 	// Defined at creation
-	Name                string         `datastore:"name" json:"name"`
-	DisplayName         string         `datastore:"display_name" json:"display_name"`
-	SuggestionPool      *datastore.Key `datastore:"suggestion_pool" json:"suggestion_pool"`
-	PreshowVoted        bool           `datastore:"preshow_voted" json:"preshow_voted"`
-	HasIntervals        bool           `datastore:"has_intervals" json:"has_intervals"`
-	IntervalUsesPlayers bool           `datastore:"interval_uses_players" json:"interval_uses_players"`
-	Intervals           []int64        `datastore:"intervals" json:"intervals"`
-	Style               string         `datastore:"style" json:"style"`
-	Occurs              string         `datastore:"occurs" json:"occurs"`
-	Ordering            int64          `datastore:"ordering" json:"ordering"`
-	Options             int64          `datastore:"options" json:"options"`
-	RandomizeAmount     int64          `datastore:"randomize_amount" json:"randomize_amount"`
-	ButtonColor         string         `datastore:"button_color" json:"button_color"`
+	Name                string         `datastore:"name" json:"name,omitempty"`
+	DisplayName         string         `datastore:"display_name" json:"display_name,omitempty"`
+	SuggestionPool      *datastore.Key `datastore:"suggestion_pool" json:"suggestion_pool,omitempty"`
+	PreshowVoted        bool           `datastore:"preshow_voted" json:"preshow_voted,omitempty"`
+	HasIntervals        bool           `datastore:"has_intervals" json:"has_intervals,omitempty"`
+	IntervalUsesPlayers bool           `datastore:"interval_uses_players" json:"interval_uses_players,omitempty"`
+	Intervals           []int64        `datastore:"intervals" json:"intervals,omitempty"`
+	Style               string         `datastore:"style" json:"style,omitempty"`
+	Occurs              string         `datastore:"occurs" json:"occurs,omitempty"`
+	Ordering            int64          `datastore:"ordering" json:"ordering,omitempty"`
+	Options             int64          `datastore:"options" json:"options,omitempty"`
+	RandomizeAmount     int64          `datastore:"randomize_amount" json:"randomize_amount,omitempty"`
+	ButtonColor         string         `datastore:"button_color" json:"button_color,omitempty"`
 
 	// Dynamic
-	CurrentInterval     int64          `datastore:"current_interval" json:"current_interval"`
-	CurrentInit         time.Time      `datastore:"current_init" json:"current_init"`
+	CurrentInterval     int64          `datastore:"current_interval" json:"current_interval,omitempty"`
+	CurrentInit         time.Time      `datastore:"current_init" json:"current_init,omitempty"`
 }
 
 
 type Show struct {
-	VoteLength      int64            `datastore:"vote_length" json:"vote_length"`
-	ResultLength    int64            `datastore:"result_length" json:"result_length"`
-	VoteOptions     int64            `datastore:"vote_options" json:"vote_options"`
-	Timezone        string           `datastore:"timezone" json:"timezone"`
-	VoteTypes       []*datastore.Key `datastore:"vote_types" json:"vote_types"`
-	Players         []*datastore.Key `datastore:"players" json:"players"`
-	PlayerPool      []*datastore.Key `datastore:"player_pool" json:"player_pool"`
-	Created         time.Time        `datastore:"created" json:"created"`
-	Archived        bool             `datastore:"archived" json:"archived"`
-	CurrentVoteType *datastore.Key   `datastore:"current_vote_type" json:"current_vote_type"`
-	CurrentVoteInit time.Time        `datastore:"current_vote_init" json:"current_vote_init"`
-	RecapType       *datastore.Key   `datastore:"recap_type" json:"recap_type"`
-	RecapInit       time.Time        `datastore:"recap_init" json:"recap_init"`
-	Locked          bool             `datastore:"locked" json:"locked"`
+	VoteLength      int64            `datastore:"vote_length" json:"vote_length,omitempty"`
+	ResultLength    int64            `datastore:"result_length" json:"result_length,omitempty"`
+	VoteOptions     int64            `datastore:"vote_options" json:"vote_options,omitempty"`
+	Timezone        string           `datastore:"timezone" json:"timezone,omitempty"`
+	VoteTypes       []*datastore.Key `datastore:"vote_types" json:"vote_types,omitempty"`
+	Players         []*datastore.Key `datastore:"players" json:"players,omitempty"`
+	PlayerPool      []*datastore.Key `datastore:"player_pool" json:"player_pool,omitempty"`
+	Created         time.Time        `datastore:"created" json:"created,-"`
+	Archived        bool             `datastore:"archived" json:"archived,omitempty"`
+	CurrentVoteType *datastore.Key   `datastore:"current_vote_type" json:"current_vote_type,omitempty"`
+	CurrentVoteInit time.Time        `datastore:"current_vote_init" json:"-"`
+	RecapType       *datastore.Key   `datastore:"recap_type" json:"recap_type,omitempty"`
+	RecapInit       time.Time        `datastore:"recap_init" json:"-"`
+	Locked          bool             `datastore:"locked" json:"locked,omitempty"`
 }
 
 
 type Suggestion struct {
-	Show           *datastore.Key `datastore:"show" json:"show"`
-	SuggestionPool *datastore.Key `datastore:"suggestion_pool" json:"suggestion_pool"`
-	Used           bool           `datastore:"used" json:"used"`
-	VotedOn        bool           `datastore:"voted_on" json:"voted_on"`
-	AmountVotedOn  int64          `datastore:"amount_voted_on" json:"amount_voted_on"`
-	Value          string         `datastore:"value" json:"value"`
-	PreshowValue   int64          `datastore:"preshow_value" json:"preshow_value"`
-	SessionID      string         `datastore:"session_id" json:"session_id"`
-	UserID         string         `datastore:"user_id" json:"user_id"`
-	Created        time.Time      `datastore:"created" json:"created"`
+	Show           *datastore.Key `datastore:"show" json:"show,omitempty"`
+	SuggestionPool *datastore.Key `datastore:"suggestion_pool" json:"suggestion_pool,omitempty"`
+	Used           bool           `datastore:"used" json:"used,omitempty"`
+	VotedOn        bool           `datastore:"voted_on" json:"voted_on,omitempty"`
+	AmountVotedOn  int64          `datastore:"amount_voted_on" json:"amount_voted_on,omitempty"`
+	Value          string         `datastore:"value" json:"value,omitempty"`
+	PreshowValue   int64          `datastore:"preshow_value" json:"preshow_value,omitempty"`
+	SessionID      string         `datastore:"session_id" json:"session_id,omitempty"`
+	UserID         string         `datastore:"user_id" json:"user_id,omitempty"`
+	Created        time.Time      `datastore:"created" json:"-"`
 }
 
 
 type PreshowVote struct {
-	Show           *datastore.Key `datastore:"show" json:"show"`
-	Suggestion     *datastore.Key `datastore:"suggestion" json:"suggestion"`
-	SessionID      string         `datastore:"session_id" json:"session_id"`
+	Show           *datastore.Key `datastore:"show" json:"show,omitempty"`
+	Suggestion     *datastore.Key `datastore:"suggestion" json:"suggestion,omitempty"`
+	SessionID      string         `datastore:"session_id" json:"session_id,omitempty"`
 }
 
 
 type LiveVote struct {
-	Show       *datastore.Key `datastore:"show" json:"show"`
-	VoteType   *datastore.Key `datastore:"vote_type" json:"vote_type"`
-	Player     *datastore.Key `datastore:"player" json:"player"`
-	Suggestion *datastore.Key `datastore:"suggestion" json:"suggestion"`
-	Interval   int64          `datastore:"interval" json:"interval"`
-	SessionID  string         `datastore:"session_id" json:"session_id"`
-	UserID     string         `datastore:"user_id" json:"user_id"`
+	Show       *datastore.Key `datastore:"show" json:"show,omitempty"`
+	VoteType   *datastore.Key `datastore:"vote_type" json:"vote_type,omitempty"`
+	Player     *datastore.Key `datastore:"player" json:"player,omitempty"`
+	Suggestion *datastore.Key `datastore:"suggestion" json:"suggestion,omitempty"`
+	Interval   int64          `datastore:"interval" json:"interval,omitempty"`
+	SessionID  string         `datastore:"session_id" json:"session_id,omitempty"`
+	UserID     string         `datastore:"user_id" json:"user_id,omitempty"`
 }
 
 
 type ShowInterval struct {
-	Show       *datastore.Key `datastore:"show" json:"show"`
-	VoteType   *datastore.Key `datastore:"vote_type" json:"vote_type"`
-	Interval   int64          `datastore:"interval" json:"interval"`
-	Player     *datastore.Key `datastore:"player" json:"player"`
+	Show       *datastore.Key `datastore:"show" json:"show,omitempty"`
+	VoteType   *datastore.Key `datastore:"vote_type" json:"vote_type,omitempty"`
+	Interval   int64          `datastore:"interval" json:"interval,omitempty"`
+	Player     *datastore.Key `datastore:"player" json:"player,omitempty"`
 }
 
 
 type VoteOptions struct {
-	Show       *datastore.Key   `datastore:"show" json:"show"`
-	VoteType   *datastore.Key   `datastore:"vote_type" json:"vote_type"`
-	Interval   int64            `datastore:"interval" json:"interval"`
-	OptionList []*datastore.Key `datastore:"option_list" json:"option_list"`
+	Show       *datastore.Key   `datastore:"show" json:"show,omitempty"`
+	VoteType   *datastore.Key   `datastore:"vote_type" json:"vote_type,omitempty"`
+	Interval   int64            `datastore:"interval" json:"interval,omitempty"`
+	OptionList []*datastore.Key `datastore:"option_list" json:"option_list,omitempty"`
 }
 
 
 type VotedItem struct {
-	VoteType   *datastore.Key `datastore:"vote_type" json:"vote_type"`
-	Show       *datastore.Key `datastore:"show" json:"show"`
-	Suggestion *datastore.Key `datastore:"suggestion" json:"suggestion"`
-	Player     *datastore.Key `datastore:"player" json:"player"`
-	Interval   int64          `datastore:"interval" json:"interval"`
+	VoteType   *datastore.Key `datastore:"vote_type" json:"vote_type,omitempty"`
+	Show       *datastore.Key `datastore:"show" json:"show,omitempty"`
+	Suggestion *datastore.Key `datastore:"suggestion" json:"suggestion,omitempty"`
+	Player     *datastore.Key `datastore:"player" json:"player,omitempty"`
+	Interval   int64          `datastore:"interval" json:"interval,omitempty"`
 }
 
 
 type Medal struct {
-	Name          string `datastore:"name" json:"name"`
-	DisplayName   string `datastore:"display_name" json:"display_name"`
-	Description   string `datastore:"description" json:"description"`
-	ImageFilename string `datastore:"image_filename" json:"image_filename"`
-	IconFilename  string `datastore:"icon_filename" json:"icon_filename"`
+	Name          string `datastore:"name" json:"name,omitempty"`
+	DisplayName   string `datastore:"display_name" json:"display_name,omitempty"`
+	Description   string `datastore:"description" json:"description,omitempty"`
+	ImageFilename string `datastore:"image_filename" json:"image_filename,omitempty"`
+	IconFilename  string `datastore:"icon_filename" json:"icon_filename,omitempty"`
 }
 
 
 type LeaderboardEntry struct {
-	Show        *datastore.Key   `datastore:"show" json:"show"`
-	ShowDate    time.Time        `datastore:"show_date" json:"show_date"`
-	UserID      string           `datastore:"user_id" json:"user_id"`
-	Points      int64            `datastore:"points" json:"points"`
-	Wins        int64            `datastore:"wins" json:"wins"`
-	Medals      []*datastore.Key `datastore:"medals" json:"medals"`
+	Show        *datastore.Key   `datastore:"show" json:"show,omitempty"`
+	ShowDate    time.Time        `datastore:"show_date" json:"-"`
+	UserID      string           `datastore:"user_id" json:"user_id,omitempty"`
+	Points      int64            `datastore:"points" json:"points,omitempty"`
+	Wins        int64            `datastore:"wins" json:"wins,omitempty"`
+	Medals      []*datastore.Key `datastore:"medals" json:"medals,omitempty"`
 	Username    string           `json:"username"`
 	Suggestions int              `json:"suggestions"`
 }
@@ -153,14 +153,14 @@ type LeaderboardEntry struct {
 
 
 type UserProfile struct {
-	UserID         string    `datastore:"user_id" json:"user_id"`
-	Username       string    `datastore:"username" json:"username"`
-	StripUsername  string    `datastore:"strip_username" json:"strip_username"`
-	Email          string    `datastore:"email" json:"email"`
-	LoginType      string    `datastore:"login_type" json:"login_type"`
-	CurrentSession string    `datastore:"current_session" json:"current_session"`
-	FBAcessToken   string    `datastore:"fb_access_token" json:"fb_access_token"`
-	Created        time.Time `datastore:"created" json:"created"`
+	UserID         string    `datastore:"user_id" json:"user_id,omitempty"`
+	Username       string    `datastore:"username" json:"username,omitempty"`
+	StripUsername  string    `datastore:"strip_username" json:"strip_username,omitempty"`
+	Email          string    `datastore:"email" json:"email,omitempty"`
+	LoginType      string    `datastore:"login_type" json:"login_type,omitempty"`
+	CurrentSession string    `datastore:"current_session" json:"current_session,omitempty"`
+	FBAcessToken   string    `datastore:"fb_access_token" json:"fb_access_token,omitempty"`
+	Created        time.Time `datastore:"created" json:"-"`
 }
 
 
@@ -170,7 +170,7 @@ type EmailOptOut struct {
 
 
 type LeaderboardSpan struct {
-	Name      string    `datastore:"name" json:"name"`
-	StartDate time.Time `datastore:"start_date" json:"start_date"`
-	EndDate   time.Time `datastore:"end_date" json:"end_date"`
+	Name      string    `datastore:"name" json:"name,omitempty"`
+	StartDate time.Time `datastore:"start_date" json:"start_date,omitempty"`
+	EndDate   time.Time `datastore:"end_date" json:"end_date,omitempty"`
 }

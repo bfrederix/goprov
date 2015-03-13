@@ -54,11 +54,10 @@ func GetModelEntities(rw http.ResponseWriter, r *http.Request, modelType string,
 	}
 	// If a name was specified
 	if name, ok := params["name"]; ok {
-		log.Println("Query Name!")
 		q = q.Filter("name =", name)
 	}
 	// If a session id was specified
-	if sessionID, ok := params["id"]; ok {
+	if sessionID, ok := params["current_session"]; ok {
 		q = q.Filter("current_session =", sessionID)
 	}
 	// If a show id/key was specified
@@ -139,6 +138,10 @@ func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[s
 		if _, err := q.GetAll(c, &players); err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
+		// If nothing was found
+		if players == nil {
+			return Player{}
+		}
 		// Set the non-model fields
 		players[0].SetProperties()
 		return players[0]
@@ -172,6 +175,10 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params 
 
 		if _, err := q.GetAll(c, &userProfiles); err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+		// If nothing was found
+		if userProfiles == nil {
+			return UserProfile{}
 		}
 		// Set the non-model fields
 		//userProfiles[0].SetProperties()

@@ -53,7 +53,6 @@ func AuthContext(rw http.ResponseWriter, r *http.Request, dc *DefaultContext) {
 		dc.UserID = ""
 		dc.IsAdmin = false
 		dc.Username = ""
-		//dc.SessionID = session.Values["id"]
 	} else {
 		dc.AuthURL, _ = user.LogoutURL(c, r.URL.Path)
 		dc.AuthAction = "Logout"
@@ -76,7 +75,7 @@ func SessionHandler(rw http.ResponseWriter, r *http.Request) *sessions.Session {
 	if session.Values["id"] == nil {
 		rando := rand.New(rand.NewSource(time.Now().UnixNano()))
 		// Create the session id in the cookie if it doesn't exist
-		session.Values["id"] = strconv.FormatInt(rando.Int63(), 64)
+		session.Values["id"] = strconv.FormatInt(rando.Int63(), 10)
     	// Save it.
     	session.Save(r, rw)
 	}
