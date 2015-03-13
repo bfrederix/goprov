@@ -36,32 +36,55 @@ type DefaultContext struct {
 }
 
 
+func GetUserBySession(rw http.ResponseWriter, r *http.Request, sessionID string) *UserProfile {
+	// Try to get profile by session
+	sessionParams := map[string]interface{}{"current_session": sessionID}
+	up := GetUserProfile(rw, r, false, sessionParams)
+
+	return up
+}
+
+
 func AuthContext(rw http.ResponseWriter, r *http.Request, dc *DefaultContext) {
 	c := appengine.NewContext(r)
-    u := user.Current(c)
-	session := SessionHandler(rw, r)
-	dc.SessionID, _ = session.Values["id"].(string)
 	dc.ImagePath = "/static/img/"
 	dc.CSSPath = "/static/css/"
 	dc.JSPath = "/static/js/"
 	dc.Context = c
-	log.Println("User data: ", session.Values["id"])
-	// If the user doesn't exists
+	// Get the user
+	u := user.Current(c)
+	// Get the session id
+	session := SessionHandler(rw, r)
+	sessionID, _ = session.Values["id"].(string)
+	dc.SessionID = sessionID
+	// Get the user profile by session
+	userProfile := GetUserBySession(rw, r, sessionID)
+	// If the user doesn't exists, return
 	if u == nil {
 		dc.AuthURL, _ = user.LoginURL(c, r.URL.Path)
 		dc.AuthAction = "Login"
 		dc.UserID = ""
 		dc.IsAdmin = false
 		dc.Username = ""
-	} else {
+		return
+	}
+	// If the user profile was found, return
+	if userProfile != (UserProfile{}) {
 		dc.AuthURL, _ = user.LogoutURL(c, r.URL.Path)
 		dc.AuthAction = "Logout"
 		dc.IsAdmin = u.Admin
-		// Try to get profile by session
-		sessionParams := map[string]interface{}{"current_session": dc.SessionID}
-		up := GetUserProfile(rw, r, false, sessionParams)
-		log.Println("User data 2: ", up)
+		return
 	}
+	log.Println("User data: ", sessionID)
+	dc.AuthURL, _ = user.LogoutURL(c, r.URL.Path)
+	dc.AuthAction = "Logout"
+	dc.IsAdmin = u.Admin
+	log.Println("User data 2: ", up)
+}
+
+
+func GoogleLogin(*user.User, *DefaultContext) {
+	return
 }
 
 

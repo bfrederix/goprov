@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="63573255-14dc-4b7f-a552-394d67211aca" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/voteprov/auth.go" afterPath="$PROJECT_DIR$/src/voteprov/auth.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/voteprov/models.go" afterPath="$PROJECT_DIR$/src/voteprov/models.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/voteprov/service.go" afterPath="$PROJECT_DIR$/src/voteprov/service.go" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="goprov.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -40,11 +37,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="auth.go" pinned="false" current="false" current-in-tab="false">
+          <file leaf-file-name="auth.go" pinned="false" current="true" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/src/voteprov/auth.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-21.384615" vertical-offset="374" max-vertical-offset="1410">
-                  <caret line="62" column="40" selection-start-line="62" selection-start-column="40" selection-end-line="62" selection-end-column="40" />
+                <state vertical-scroll-proportion="0.73044395" vertical-offset="599" max-vertical-offset="1755">
+                  <caret line="86" column="10" selection-start-line="86" selection-start-column="10" selection-end-line="86" selection-end-column="10" />
                   <folding />
                 </state>
               </provider>
@@ -53,7 +50,7 @@
           <file leaf-file-name="service.go" pinned="false" current="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/src/voteprov/service.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-8.653846" vertical-offset="1875" max-vertical-offset="3855">
+                <state vertical-scroll-proportion="-17.884615" vertical-offset="1635" max-vertical-offset="3855">
                   <caret line="140" column="31" selection-start-line="140" selection-start-column="31" selection-end-line="140" selection-end-column="31" />
                   <folding />
                 </state>
@@ -70,10 +67,10 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="models.go" pinned="false" current="true" current-in-tab="true">
+          <file leaf-file-name="models.go" pinned="false" current="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/src/voteprov/models.go">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.87138265" vertical-offset="1797" max-vertical-offset="2730">
+                <state vertical-scroll-proportion="-31.26923" vertical-offset="1797" max-vertical-offset="2730">
                   <caret line="174" column="70" selection-start-line="174" selection-start-column="70" selection-end-line="174" selection-end-column="70" />
                   <folding />
                 </state>
@@ -162,8 +159,8 @@
         <option value="$PROJECT_DIR$/src/voteprov/api.go" />
         <option value="$PROJECT_DIR$/src/voteprov/pages.go" />
         <option value="$PROJECT_DIR$/src/voteprov/service.go" />
-        <option value="$PROJECT_DIR$/src/voteprov/auth.go" />
         <option value="$PROJECT_DIR$/src/voteprov/models.go" />
+        <option value="$PROJECT_DIR$/src/voteprov/auth.go" />
       </list>
     </option>
   </component>
@@ -589,26 +586,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/voteprov/pages.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="405">
-          <caret line="5" column="11" selection-start-line="5" selection-start-column="11" selection-end-line="5" selection-end-column="11" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/templates/top_nav.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.4719472" vertical-offset="246" max-vertical-offset="1155">
           <caret line="45" column="81" selection-start-line="45" selection-start-column="81" selection-end-line="45" selection-end-column="81" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/voteprov/service.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-8.653846" vertical-offset="1875" max-vertical-offset="3855">
-          <caret line="140" column="31" selection-start-line="140" selection-start-column="31" selection-end-line="140" selection-end-column="31" />
           <folding />
         </state>
       </provider>
@@ -621,18 +602,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/voteprov/auth.go">
+    <entry file="file://$PROJECT_DIR$/src/voteprov/models.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-21.384615" vertical-offset="374" max-vertical-offset="1410">
-          <caret line="62" column="40" selection-start-line="62" selection-start-column="40" selection-end-line="62" selection-end-column="40" />
+        <state vertical-scroll-proportion="-31.26923" vertical-offset="1797" max-vertical-offset="2730">
+          <caret line="174" column="70" selection-start-line="174" selection-start-column="70" selection-end-line="174" selection-end-column="70" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/voteprov/models.go">
+    <entry file="file://$PROJECT_DIR$/src/voteprov/pages.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.87138265" vertical-offset="1797" max-vertical-offset="2730">
-          <caret line="174" column="70" selection-start-line="174" selection-start-column="70" selection-end-line="174" selection-end-column="70" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="405">
+          <caret line="5" column="11" selection-start-line="5" selection-start-column="11" selection-end-line="5" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/voteprov/service.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-17.884615" vertical-offset="1635" max-vertical-offset="3855">
+          <caret line="140" column="31" selection-start-line="140" selection-start-column="31" selection-end-line="140" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/voteprov/auth.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.73044395" vertical-offset="599" max-vertical-offset="1755">
+          <caret line="86" column="10" selection-start-line="86" selection-start-column="10" selection-end-line="86" selection-end-column="10" />
           <folding />
         </state>
       </provider>
