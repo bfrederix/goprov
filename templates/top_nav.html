@@ -14,21 +14,21 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
-                <li><a href="/">Home</a></li>
+                <li {{if eq .Page "home"}}class="active"{{end}}><a href="/">Home</a></li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                         Leaderboards <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="/leaderboards/"><strong>All-time Leaderboard</strong></a></li>
+                        <li {{if eq .Page "leaderboards"}}class="active"{{end}}><a href="/leaderboards/"><strong>All-time Leaderboard</strong></a></li>
                         <li><a href="/medals/"><strong>Medals</strong></a></li>
                     </ul>
                 </li>
                 <li><a href="/recap/">Show Recaps</a></li>
-                {{ if .UserID ne nil }}
+                {{ if ne .UserID "" }}
                     <li><a href="/user/">My Account</a></li>
                 {{ end }}
-                {{ if .IsAdmin true }}
+                {{ if eq .IsAdmin true }}
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             Admin <span class="caret"></span>
@@ -49,7 +49,7 @@
                 {{ end }}
               </ul>
               <ul class="nav navbar-nav navbar-right">
-                {{ if .AuthAction eq "Login" }}
+                {{ if eq .AuthAction "Login" }}
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             Login <span class="caret"></span>
@@ -63,7 +63,7 @@
                     <li><a id="{{.AuthAction}}" href="{{.AuthURL}}">{{.AuthAction}}</a></li>
                 {{ end }}
               </ul>
-              {{ if .UserID ne nil }}
+              {{ if ne .UserID "" }}
                 <p class="navbar-text navbar-right">{{.Username}}</p>
               {{ end }}
             </div>

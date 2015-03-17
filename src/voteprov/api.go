@@ -8,7 +8,7 @@ import (
 
 func PlayerAPIGetID(rw http.ResponseWriter, r *http.Request) {
 	// Get the player entity
-	player := GetPlayer(rw, r, true, nil)
+	_, player := GetPlayer(rw, r, true, nil)
 	log.Println("PlayerAPIGet: ", "ID!")
 	// Encode the player into JSON output
 	json.NewEncoder(rw).Encode(player)
@@ -18,7 +18,7 @@ func PlayerAPIGetID(rw http.ResponseWriter, r *http.Request) {
 
 func PlayerAPIGetQuery(rw http.ResponseWriter, r *http.Request) {
 	// Get the player entity
-	player := GetPlayer(rw, r, false, nil)
+	_, player := GetPlayer(rw, r, false, nil)
 	// Encode the player into JSON output
 	json.NewEncoder(rw).Encode(player)
 }
@@ -26,7 +26,7 @@ func PlayerAPIGetQuery(rw http.ResponseWriter, r *http.Request) {
 
 func PlayersAPIGet(rw http.ResponseWriter, r *http.Request) {
 	// Get the player entity
-	players := GetPlayers(rw, r, nil)
+	_, players := GetPlayers(rw, r, nil)
 	log.Println("Logging: ", "Hello!")
 	// Encode the player into JSON output
 	json.NewEncoder(rw).Encode(players)
@@ -35,12 +35,12 @@ func PlayersAPIGet(rw http.ResponseWriter, r *http.Request) {
 
 
 func ShowsAPIGet(rw http.ResponseWriter, r *http.Request) {
-	shows := GetShows(rw, r, nil)
+	_, shows := GetShows(rw, r, nil)
 	json.NewEncoder(rw).Encode(shows)
 }
 
 
 func LeardboardEntriesAPIGet(rw http.ResponseWriter, r *http.Request) {
-	leaderboardEntries := GetLeaderboardEntries(rw, r, nil)
+	_, leaderboardEntries := GetLeaderboardEntries(rw, r, nil)
 	json.NewEncoder(rw).Encode(leaderboardEntries)
 }

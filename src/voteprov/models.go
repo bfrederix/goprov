@@ -159,7 +159,7 @@ type UserProfile struct {
 	Email          string    `datastore:"email" json:"email,omitempty"`
 	LoginType      string    `datastore:"login_type" json:"login_type,omitempty"`
 	CurrentSession string    `datastore:"current_session" json:"current_session,omitempty"`
-	FBAcessToken   string    `datastore:"fb_access_token" json:"fb_access_token,omitempty"`
+	FBAccessToken   string    `datastore:"fb_access_token" json:"fb_access_token,omitempty"`
 	Created        time.Time `datastore:"created" json:"-"`
 }
 

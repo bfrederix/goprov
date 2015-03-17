@@ -9,7 +9,7 @@ import (
 func CreateHandler() *mux.Router {
 	r := mux.NewRouter()
 	// Versioned API
-	s := r.PathPrefix("/v1").Subrouter()
+	s := r.PathPrefix("/api/v1").Subrouter()
 	s.HandleFunc("/player/{entityId}/", PlayerAPIGetID)
 	s.HandleFunc("/player/", PlayerAPIGetQuery)
 	s.HandleFunc("/players/", PlayersAPIGet)
@@ -18,7 +18,8 @@ func CreateHandler() *mux.Router {
 
 	// HTML Pages
 	h := r.PathPrefix("/").Subrouter()
-	h.HandleFunc("/", Home)
+	h.HandleFunc("/", HomePage)
+	h.HandleFunc("/leaderboards/", LeaderboardsPage)
 
 	// Facebook Callback
 	h.HandleFunc("/fb_login/", FacebookLogin)

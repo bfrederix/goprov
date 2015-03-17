@@ -2,8 +2,10 @@ package voteprov
 
 
 import (
-	"github.com/gorilla/mux"
+	"time"
+	"strings"
 	"strconv"
+	"github.com/gorilla/mux"
 	"appengine"
     "appengine/datastore"
 	"net/http"
@@ -111,7 +113,7 @@ func WebQueryEntities(rw http.ResponseWriter, r *http.Request, modelType string,
 ///////////////////////// Single Item Get /////////////////////////////////
 
 
-func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (Player) {
+func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, Player) {
 	if hasID == true {
 		var player Player
 		c, playerKey := GetEntityKeyByURLIDs(rw, r, "Player")
@@ -122,7 +124,7 @@ func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[s
 		}
 		// Make sure the image path is set
 		player.SetProperties()
-		return player
+		return playerKey, player
 	} else {
 		var players []Player
 		var c appengine.Context
@@ -134,22 +136,22 @@ func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[s
 			// Otherwise use query params from url
 			c, q = WebQueryEntities(rw, r, "Player", 1)
 		}
-
-		if _, err := q.GetAll(c, &players); err != nil {
+		keys, err := q.GetAll(c, &players)
+		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 		// If nothing was found
 		if players == nil {
-			return Player{}
+			return &datastore.Key{}, Player{}
 		}
 		// Set the non-model fields
 		players[0].SetProperties()
-		return players[0]
+		return keys[0], players[0]
 	}
 }
 
 
-func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (UserProfile) {
+func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, UserProfile) {
 	if hasID == true {
 		var userProfile UserProfile
 		c, userProfileKey := GetEntityKeyByURLIDs(rw, r, "UserProfile")
@@ -160,7 +162,7 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params 
 		}
 		// Make sure the image path is set
 		//userProfile.SetProperties()
-		return userProfile
+		return userProfileKey, userProfile
 	} else {
 		var userProfiles []UserProfile
 		var c appengine.Context
@@ -172,17 +174,17 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params 
 			// Otherwise use query params from url
 			c, q = WebQueryEntities(rw, r, "UserProfile", 1)
 		}
-
-		if _, err := q.GetAll(c, &userProfiles); err != nil {
+		keys, err := q.GetAll(c, &userProfiles)
+		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 		// If nothing was found
 		if userProfiles == nil {
-			return UserProfile{}
+			return &datastore.Key{}, UserProfile{}
 		}
 		// Set the non-model fields
 		//userProfiles[0].SetProperties()
-		return userProfiles[0]
+		return keys[0], userProfiles[0]
 	}
 }
 
@@ -190,7 +192,7 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params 
 ///////////////////////// Multiple Item Queries ////////////////////////////
 
 
-func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]Player) {
+func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Player) {
 	var c appengine.Context
 	var q *datastore.Query
 	// If parameters were specified
@@ -201,7 +203,8 @@ func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]inter
 		c, q = WebQueryEntities(rw, r, "Player", 1)
 	}
 	var players []Player
-	if _, err := q.GetAll(c, &players); err != nil {
+	keys, err := q.GetAll(c, &players)
+	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
 	// Set the non-model fields
@@ -209,11 +212,11 @@ func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]inter
 	    player := &players[i]
         player.SetProperties()
     }
-	return players
+	return keys, players
 }
 
 
-func GetShows(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]Show) {
+func GetShows(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Show) {
 	var c appengine.Context
 	var q *datastore.Query
 	// If parameters were specified
@@ -224,15 +227,16 @@ func GetShows(rw http.ResponseWriter, r *http.Request, params map[string]interfa
 		c, q = WebQueryEntities(rw, r, "Show", 1)
 	}
 	var shows []Show
-	if _, err := q.GetAll(c, &shows); err != nil {
+	keys, err := q.GetAll(c, &shows)
+	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
 
-	return shows
+	return keys, shows
 }
 
 
-func GetLeaderboardEntries(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]LeaderboardEntry) {
+func GetLeaderboardEntries(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]*datastore.Key, []LeaderboardEntry) {
 	var c appengine.Context
 	var q *datastore.Query
 	// If parameters were specified
@@ -243,9 +247,46 @@ func GetLeaderboardEntries(rw http.ResponseWriter, r *http.Request, params map[s
 		c, q = WebQueryEntities(rw, r, "LeaderboardEntry", 1)
 	}
 	var leaderboardEntries []LeaderboardEntry
-	if _, err := q.GetAll(c, &leaderboardEntries); err != nil {
+	keys, err := q.GetAll(c, &leaderboardEntries)
+	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
 
-	return leaderboardEntries
+	return keys, leaderboardEntries
+}
+
+
+//////////////////////////// Updating Entities /////////////////////////////////////////
+
+
+func UpdateProfileSession(c appengine.Context, upKey *datastore.Key, userProfile *UserProfile, sessionID string) error {
+	userProfile.CurrentSession = sessionID
+	_, err := datastore.Put(c, upKey, userProfile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateUserProfile(c appengine.Context, userID string, username string,
+					   email string, loginType string, currentSession string,
+					   facebookToken string) (*datastore.Key, *UserProfile, error) {
+	if username == "" {
+		s := strings.Split(email, "@")
+    	username = s[0]
+	}
+	stripUsername := strings.Replace(username, " ", "", -1)
+	stripUsername = strings.ToLower(stripUsername)
+	userProfile := UserProfile{
+		UserID:         userID,
+		Username:       username,
+		StripUsername:  stripUsername,
+		Email:          email,
+		LoginType:      loginType,
+		CurrentSession: currentSession,
+		FBAccessToken:  facebookToken,
+		Created:        time.Now().UTC(),
+	}
+	key, err := datastore.Put(c, datastore.NewIncompleteKey(c, "UserProfile", nil), &userProfile)
+	return key, &userProfile, err
 }
