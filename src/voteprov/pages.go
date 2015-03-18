@@ -7,15 +7,20 @@ import (
 )
 
 
+type BaseContext struct {
+	DC        DefaultContext
+}
+
+
 var templates = template.Must(template.ParseGlob("templates/*"))
 
 
 func HomePage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
-	dc.Page = "home"
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	bc.DC.Page = "home"
 	//log.Println("Session data: ", session.Values)
-    err := templates.ExecuteTemplate(rw, "home", &dc)
+    err := templates.ExecuteTemplate(rw, "home", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -23,25 +28,61 @@ func HomePage(rw http.ResponseWriter, r *http.Request) {
 
 
 func LeaderboardsPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
-	dc.Page = "leaderboards"
-    err := templates.ExecuteTemplate(rw, "leaderboards", &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	bc.DC.Page = "leaderboards"
+    err := templates.ExecuteTemplate(rw, "leaderboards", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
 }
 
 
+func ShowRecapPage(rw http.ResponseWriter, r *http.Request) {
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	bc.DC.Page = "recap"
+    err := templates.ExecuteTemplate(rw, "recap", &bc)
+	if err != nil {
+        http.Error(rw, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+
+func UserAccountPage(rw http.ResponseWriter, r *http.Request) {
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	bc.DC.Page = "user"
+    err := templates.ExecuteTemplate(rw, "user", &bc)
+	if err != nil {
+        http.Error(rw, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+
+func MedalsPage(rw http.ResponseWriter, r *http.Request) {
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	bc.DC.Page = "medals"
+    err := templates.ExecuteTemplate(rw, "medals", &bc)
+	if err != nil {
+        http.Error(rw, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+
+/////////////////////////// Admin Pages ///////////////////////////
+
+
 func InstructionPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "pre_show"
-    err := templates.ExecuteTemplate(rw, "pre_show", &dc)
+	bc.DC.Page = "pre_show"
+    err := templates.ExecuteTemplate(rw, "pre_show", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -49,14 +90,14 @@ func InstructionPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func CreateShowPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "create_show"
-    err := templates.ExecuteTemplate(rw, "create_show", &dc)
+	bc.DC.Page = "create_show"
+    err := templates.ExecuteTemplate(rw, "create_show", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -64,14 +105,14 @@ func CreateShowPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func VoteTypesPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "vote_types"
-    err := templates.ExecuteTemplate(rw, "vote_types", &dc)
+	bc.DC.Page = "vote_types"
+    err := templates.ExecuteTemplate(rw, "vote_types", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -79,14 +120,14 @@ func VoteTypesPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func SuggestionPoolPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "suggestion_pools"
-    err := templates.ExecuteTemplate(rw, "suggestion_pools", &dc)
+	bc.DC.Page = "suggestion_pools"
+    err := templates.ExecuteTemplate(rw, "suggestion_pools", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -94,14 +135,14 @@ func SuggestionPoolPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func CreateMedalsPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "create_medals"
-    err := templates.ExecuteTemplate(rw, "create_medals", &dc)
+	bc.DC.Page = "create_medals"
+    err := templates.ExecuteTemplate(rw, "create_medals", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -109,14 +150,14 @@ func CreateMedalsPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func AddPlayersPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "add_players"
-    err := templates.ExecuteTemplate(rw, "add_players", &dc)
+	bc.DC.Page = "add_players"
+    err := templates.ExecuteTemplate(rw, "add_players", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -124,14 +165,14 @@ func AddPlayersPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func DeleteToolsPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "delete_tools"
-    err := templates.ExecuteTemplate(rw, "delete_tools", &dc)
+	bc.DC.Page = "delete_tools"
+    err := templates.ExecuteTemplate(rw, "delete_tools", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -139,14 +180,14 @@ func DeleteToolsPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func JSTestPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "js_test"
-    err := templates.ExecuteTemplate(rw, "js_test", &dc)
+	bc.DC.Page = "js_test"
+    err := templates.ExecuteTemplate(rw, "js_test", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
@@ -154,14 +195,14 @@ func JSTestPage(rw http.ResponseWriter, r *http.Request) {
 
 
 func ExportEmailsPage(rw http.ResponseWriter, r *http.Request) {
-	dc := DefaultContext{}
-	AuthContext(rw, r, &dc)
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
 	// Redirect if not admin
-	if !dc.IsAdmin {
+	if !bc.DC.IsAdmin {
 		AdminRedirect(rw, r)
 	}
-	dc.Page = "export_emails"
-    err := templates.ExecuteTemplate(rw, "export_emails", &dc)
+	bc.DC.Page = "export_emails"
+    err := templates.ExecuteTemplate(rw, "export_emails", &bc)
 	if err != nil {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }

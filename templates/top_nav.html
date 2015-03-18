@@ -14,56 +14,56 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
-                <li {{if eq .Page "home"}}class="active"{{end}}><a href="/">Home</a></li>
+                <li {{if eq .DC.Page "home"}}class="active"{{end}}><a href="/">Home</a></li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                         Leaderboards <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li {{if eq .Page "leaderboards"}}class="active"{{end}}><a href="/leaderboards/"><strong>All-time Leaderboard</strong></a></li>
-                        <li><a href="/medals/"><strong>Medals</strong></a></li>
+                        <li {{if eq .DC.Page "leaderboards"}}class="active"{{end}}><a href="/leaderboards/"><strong>All-time Leaderboard</strong></a></li>
+                        <li {{if eq .DC.Page "medals"}}class="active"{{end}}><a href="/medals/"><strong>Medals</strong></a></li>
                     </ul>
                 </li>
-                <li><a href="/recap/">Show Recaps</a></li>
-                {{ if ne .UserID "" }}
-                    <li><a href="/user/">My Account</a></li>
+                <li {{if eq .DC.Page "recap"}}class="active"{{end}}><a href="/recap/">Show Recaps</a></li>
+                {{ if ne .DC.UserID "" }}
+                    <li {{if eq .DC.Page "user"}}class="active"{{end}}><a href="/user/{{.DC.UserID}}/">My Account</a></li>
                 {{ end }}
-                {{ if eq .IsAdmin true }}
+                {{ if eq .DC.IsAdmin true }}
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             Admin <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li {{if eq .Page "pre_show"}}class="active"{{end}}><a href="/admin/pre_show/">Pre-show Instructions</a></li>
-                            <li {{if eq .Page "create_show"}}class="active"{{end}}><a href="/admin/create_show/">Create Show</a></li>
-                            <li {{if eq .Page "vote_types"}}class="active"{{end}}><a href="/admin/vote_types/">Add/Delete Vote Types</a></li>
-                            <li {{if eq .Page "suggestion_pools"}}class="active"{{end}}><a href="/admin/suggestion_pools/">Add/Delete Suggestion Pools</a></li>
-                            <li {{if eq .Page "create_medals"}}class="active"{{end}}><a href="/admin/create_medals/">Add/Delete Medals</a></li>
-                            <li {{if eq .Page "add_players"}}class="active"{{end}}><a href="/admin/add_players/">Add Players</a></li>
-                            <li {{if eq .Page "delete_tools"}}class="active"{{end}}><a href="/admin/delete_tools/">Delete Tools</a></li>
-                            <li {{if eq .Page "js_test"}}class="active"{{end}}><a href="/admin/js_test/">Test JS</a></li>
-                            <li {{if eq .Page "export_emails"}}class="active"{{end}}><a href="/admin/export_emails/">Export e-mails</a></li>
+                            <li {{if eq .DC.Page "pre_show"}}class="active"{{end}}><a href="/admin/pre_show/">Pre-show Instructions</a></li>
+                            <li {{if eq .DC.Page "create_show"}}class="active"{{end}}><a href="/admin/create_show/">Create Show</a></li>
+                            <li {{if eq .DC.Page "vote_types"}}class="active"{{end}}><a href="/admin/vote_types/">Add/Delete Vote Types</a></li>
+                            <li {{if eq .DC.Page "suggestion_pools"}}class="active"{{end}}><a href="/admin/suggestion_pools/">Add/Delete Suggestion Pools</a></li>
+                            <li {{if eq .DC.Page "create_medals"}}class="active"{{end}}><a href="/admin/create_medals/">Add/Delete Medals</a></li>
+                            <li {{if eq .DC.Page "add_players"}}class="active"{{end}}><a href="/admin/add_players/">Add Players</a></li>
+                            <li {{if eq .DC.Page "delete_tools"}}class="active"{{end}}><a href="/admin/delete_tools/">Delete Tools</a></li>
+                            <li {{if eq .DC.Page "js_test"}}class="active"{{end}}><a href="/admin/js_test/">Test JS</a></li>
+                            <li {{if eq .DC.Page "export_emails"}}class="active"{{end}}><a href="/admin/export_emails/">Export e-mails</a></li>
                         </ul>
                     </li>
                 {{ end }}
               </ul>
               <ul class="nav navbar-nav navbar-right">
-                {{ if eq .AuthAction "Login" }}
+                {{ if eq .DC.AuthAction "Login" }}
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             Login <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
                             <li><a href="#" onclick="facebook_login();"><div class="facebook-icon-small pull-left"></div>&nbsp;<strong>Login with Facebook</strong></a></li>
-                            <li><a id="{{.AuthAction}}" href="{{.AuthURL}}"><div class="google-icon-small pull-left"></div>&nbsp;<strong>Login with Google</strong></a></li>
+                            <li><a id="{{.DC.AuthAction}}" href="{{.DC.AuthURL}}"><div class="google-icon-small pull-left"></div>&nbsp;<strong>Login with Google</strong></a></li>
                         </ul>
                     </li>
                 {{ else }}
-                    <li><a id="{{.AuthAction}}" href="{{.AuthURL}}">{{.AuthAction}}</a></li>
+                    <li><a id="{{.DC.AuthAction}}" href="{{.DC.AuthURL}}">{{.DC.AuthAction}}</a></li>
                 {{ end }}
               </ul>
-              {{ if ne .UserID "" }}
-                <p class="navbar-text navbar-right">{{.Username}}</p>
+              {{ if ne .DC.UserID "" }}
+                <p class="navbar-text navbar-right">{{.DC.Username}}</p>
               {{ end }}
             </div>
         </div>

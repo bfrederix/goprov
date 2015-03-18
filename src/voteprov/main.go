@@ -19,7 +19,14 @@ func CreateHandler() *mux.Router {
 	// User Pages
 	h := r.PathPrefix("/").Subrouter()
 	h.HandleFunc("/", HomePage)
+	h.HandleFunc("/leaderboards/show/{show_id:[0-9]+}/", LeaderboardsPage)
+	h.HandleFunc("/leaderboards/{start_date:[0-9]+}/{end_date:[0-9]+}/", LeaderboardsPage)
 	h.HandleFunc("/leaderboards/", LeaderboardsPage)
+	h.HandleFunc("/recap/{show_id:[0-9]+}/", ShowRecapPage)
+	h.HandleFunc("/recap/", ShowRecapPage)
+	h.HandleFunc("/user/{user_id:[0-9]+}/", UserAccountPage)
+	h.HandleFunc("/medals/", MedalsPage)
+
 
 	// Admin Pages
 	a := r.PathPrefix("/admin").Subrouter()
