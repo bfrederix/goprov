@@ -16,13 +16,20 @@ func CreateHandler() *mux.Router {
 	s.HandleFunc("/shows/", ShowsAPIGet)
 	s.HandleFunc("/leaderboard_entries/", LeardboardEntriesAPIGet)
 
-	// HTML Pages
+	// User Pages
 	h := r.PathPrefix("/").Subrouter()
 	h.HandleFunc("/", HomePage)
 	h.HandleFunc("/leaderboards/", LeaderboardsPage)
 
+	// Admin Pages
+	a := r.PathPrefix("/admin").Subrouter()
+	a.HandleFunc("/pre_show/", InstructionPage)
+
 	// Facebook Callback
 	h.HandleFunc("/fb_login/", FacebookLogin)
+
+	// Logout
+	h.HandleFunc("/logout/", LogoutHandler)
 
 	return r
 }

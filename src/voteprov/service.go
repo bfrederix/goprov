@@ -2,6 +2,7 @@ package voteprov
 
 
 import (
+	"fmt"
 	"time"
 	"strings"
 	"strconv"
@@ -14,6 +15,16 @@ import (
 )
 
 
+func stringInSlice(a string, list []string) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+    }
+    return false
+}
+
+
 func GetEntityKeyByIDs(c appengine.Context, modelType string, entityIdString string) (*datastore.Key) {
 	// Entity ID string to int
 	entityId, err := strconv.ParseInt(entityIdString, 0, 64)
@@ -24,7 +35,7 @@ func GetEntityKeyByIDs(c appengine.Context, modelType string, entityIdString str
     	entityKey, keyErr := datastore.DecodeKey(entityIdString)
     	if keyErr != nil {
     		// Couldn't decode the key
-        	log.Fatal(keyErr)
+        	panic(keyErr)
     	}
     	return entityKey
     }
@@ -35,51 +46,69 @@ func GetEntityKeyByIDs(c appengine.Context, modelType string, entityIdString str
 }
 
 
-func GetEntityKeyByURLIDs(rw http.ResponseWriter, r *http.Request, modelType string) (appengine.Context, *datastore.Key) {
+func GetEntityKeyByURLIDs(c appengine.Context, r *http.Request, modelType string) *datastore.Key {
 	// Get URL path variables
 	vars := mux.Vars(r)
 	entityIdString := vars["entityId"]
-	c := appengine.NewContext(r)
 	entityKey := GetEntityKeyByIDs(c, modelType, entityIdString)
 
-	return c, entityKey
+	return entityKey
 }
 
 
-func GetModelEntities(rw http.ResponseWriter, r *http.Request, modelType string, limit int, params map[string]interface{}) (appengine.Context, *datastore.Query) {
-	c := appengine.NewContext(r)
+func GetModelEntities(c appengine.Context, modelType string, limit int, params map[string]interface{}) *datastore.Query {
 	q := datastore.NewQuery(modelType)
 	log.Println("Query Params: ", params)
+	paramsAllowed := []string{
+        "name",
+		"current_session",
+		"user_id",
+		"email",
+		"show",
+		"archived",
+		"order_by_created",
+	}
+	// Check to make sure the parameter passed is allowed
+	for key, _ := range params {
+		if ok := stringInSlice(key, paramsAllowed); !ok {
+			failure := fmt.Sprintf("Query Parameter Not Allowed: %s", key)
+			panic(failure)
+		}
+	}
 	// If empty query parameters, return the full query results
 	if params == nil {
-		return c, q
+		return q
 	}
-	// If a name was specified
+	// If a certain params were specified
 	if name, ok := params["name"]; ok {
 		q = q.Filter("name =", name)
 	}
-	// If a session id was specified
 	if sessionID, ok := params["current_session"]; ok {
 		q = q.Filter("current_session =", sessionID)
+	}
+	if userID, ok := params["user_id"]; ok {
+		q = q.Filter("user_id =", userID)
+	}
+	if email, ok := params["email"]; ok {
+		q = q.Filter("email =", email)
 	}
 	// If a show id/key was specified
 	if showID, ok := params["show"]; ok {
 		showKey := GetEntityKeyByIDs(c, "Show", showID.(string))
 		q = q.Filter("show =", showKey)
 	}
-	// If archived was specified
 	if params["archived"] != nil {
 		archived, err := strconv.ParseBool(params["archived"].(string))
 		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			panic(err.Error())
 		}
 		q = q.Filter("archived =", archived)
 	}
-	// If ordering on created date was specified
+	// If ordering was specified
 	if params["order_by_created"] != nil {
 		orderByCreated, err := strconv.ParseBool(params["order_by_created"].(string))
 		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			panic(err.Error())
 		}
 		if orderByCreated == true {
 			q = q.Order("created")
@@ -90,20 +119,22 @@ func GetModelEntities(rw http.ResponseWriter, r *http.Request, modelType string,
 		q = q.Limit(limit)
 	}
 
-	return c, q
+	return q
 }
 
 
-func WebQueryEntities(rw http.ResponseWriter, r *http.Request, modelType string, limit int) (appengine.Context, *datastore.Query) {
+func WebQueryEntities(c appengine.Context, r *http.Request, modelType string, limit int) *datastore.Query {
+	// Get the query parameters
 	queryParams := r.URL.Query()
 	params := make(map[string]interface{}, len(queryParams))
 	if queryParams != nil {
+		// Make a map out of the parameters with flexible values
 		for k, v := range queryParams {
 			params[k] = v[0]
 		}
 	}
-	c, q := GetModelEntities(rw, r, modelType, limit, params)
-	return c, q
+	q := GetModelEntities(c, modelType, limit, params)
+	return q
 }
 
 
@@ -113,32 +144,32 @@ func WebQueryEntities(rw http.ResponseWriter, r *http.Request, modelType string,
 ///////////////////////// Single Item Get /////////////////////////////////
 
 
-func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, Player) {
+func GetPlayer(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, Player) {
+	c := appengine.NewContext(r)
 	if hasID == true {
 		var player Player
-		c, playerKey := GetEntityKeyByURLIDs(rw, r, "Player")
+		playerKey := GetEntityKeyByURLIDs(c, r, "Player")
 
 		// Try to load the data into the Player struct model
 		if err := datastore.Get(c, playerKey, &player); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			panic(err.Error())
 		}
 		// Make sure the image path is set
 		player.SetProperties()
 		return playerKey, player
 	} else {
 		var players []Player
-		var c appengine.Context
 		var q *datastore.Query
 		// If parameters were specified
 		if params != nil {
-			c, q = GetModelEntities(rw, r, "Player", 1, params)
+			q = GetModelEntities(c, "Player", 1, params)
 		} else {
 			// Otherwise use query params from url
-			c, q = WebQueryEntities(rw, r, "Player", 1)
+			q = WebQueryEntities(c, r, "Player", 1)
 		}
 		keys, err := q.GetAll(c, &players)
 		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			panic(err.Error())
 		}
 		// If nothing was found
 		if players == nil {
@@ -151,32 +182,32 @@ func GetPlayer(rw http.ResponseWriter, r *http.Request, hasID bool, params map[s
 }
 
 
-func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, UserProfile) {
+func GetUserProfile(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, UserProfile) {
+	c := appengine.NewContext(r)
 	if hasID == true {
 		var userProfile UserProfile
-		c, userProfileKey := GetEntityKeyByURLIDs(rw, r, "UserProfile")
+		userProfileKey := GetEntityKeyByURLIDs(c, r, "UserProfile")
 
 		// Try to load the data into the UserProfile struct model
 		if err := datastore.Get(c, userProfileKey, &userProfile); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			panic(err.Error())
 		}
 		// Make sure the image path is set
 		//userProfile.SetProperties()
 		return userProfileKey, userProfile
 	} else {
 		var userProfiles []UserProfile
-		var c appengine.Context
 		var q *datastore.Query
 		// If parameters were specified
 		if params != nil {
-			c, q = GetModelEntities(rw, r, "UserProfile", 1, params)
+			q = GetModelEntities(c, "UserProfile", 1, params)
 		} else {
 			// Otherwise use query params from url
-			c, q = WebQueryEntities(rw, r, "UserProfile", 1)
+			q = WebQueryEntities(c, r, "UserProfile", 1)
 		}
 		keys, err := q.GetAll(c, &userProfiles)
 		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			panic(err.Error())
 		}
 		// If nothing was found
 		if userProfiles == nil {
@@ -192,20 +223,20 @@ func GetUserProfile(rw http.ResponseWriter, r *http.Request, hasID bool, params 
 ///////////////////////// Multiple Item Queries ////////////////////////////
 
 
-func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Player) {
-	var c appengine.Context
+func GetPlayers(r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Player) {
+	c := appengine.NewContext(r)
 	var q *datastore.Query
 	// If parameters were specified
 	if params != nil {
-		c, q = GetModelEntities(rw, r, "Player", 0, params)
+		q = GetModelEntities(c, "Player", 0, params)
 	} else {
 		// Otherwise use query params from url
-		c, q = WebQueryEntities(rw, r, "Player", 1)
+		q = WebQueryEntities(c, r, "Player", 1)
 	}
 	var players []Player
 	keys, err := q.GetAll(c, &players)
 	if err != nil {
-        http.Error(rw, err.Error(), http.StatusInternalServerError)
+        panic(err.Error())
     }
 	// Set the non-model fields
 	for i := range players {
@@ -216,40 +247,40 @@ func GetPlayers(rw http.ResponseWriter, r *http.Request, params map[string]inter
 }
 
 
-func GetShows(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Show) {
-	var c appengine.Context
+func GetShows(r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Show) {
+	c := appengine.NewContext(r)
 	var q *datastore.Query
 	// If parameters were specified
 	if params != nil {
-		c, q = GetModelEntities(rw, r, "Show", 0, params)
+		q = GetModelEntities(c, "Show", 0, params)
 	} else {
 		// Otherwise use query params from url
-		c, q = WebQueryEntities(rw, r, "Show", 1)
+		q = WebQueryEntities(c, r, "Show", 1)
 	}
 	var shows []Show
 	keys, err := q.GetAll(c, &shows)
 	if err != nil {
-        http.Error(rw, err.Error(), http.StatusInternalServerError)
+        panic(err.Error())
     }
 
 	return keys, shows
 }
 
 
-func GetLeaderboardEntries(rw http.ResponseWriter, r *http.Request, params map[string]interface{}) ([]*datastore.Key, []LeaderboardEntry) {
-	var c appengine.Context
+func GetLeaderboardEntries(r *http.Request, params map[string]interface{}) ([]*datastore.Key, []LeaderboardEntry) {
+	c := appengine.NewContext(r)
 	var q *datastore.Query
 	// If parameters were specified
 	if params != nil {
-		c, q = GetModelEntities(rw, r, "LeaderboardEntry", 0, params)
+		q = GetModelEntities(c, "LeaderboardEntry", 0, params)
 	} else {
 		// Otherwise use query params from url
-		c, q = WebQueryEntities(rw, r, "LeaderboardEntry", 1)
+		q = WebQueryEntities(c, r, "LeaderboardEntry", 1)
 	}
 	var leaderboardEntries []LeaderboardEntry
 	keys, err := q.GetAll(c, &leaderboardEntries)
 	if err != nil {
-        http.Error(rw, err.Error(), http.StatusInternalServerError)
+        panic(err.Error())
     }
 
 	return keys, leaderboardEntries

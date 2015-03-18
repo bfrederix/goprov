@@ -31,3 +31,18 @@ func LeaderboardsPage(rw http.ResponseWriter, r *http.Request) {
         http.Error(rw, err.Error(), http.StatusInternalServerError)
     }
 }
+
+
+func InstructionPage(rw http.ResponseWriter, r *http.Request) {
+	dc := DefaultContext{}
+	AuthContext(rw, r, &dc)
+	// Redirect if not admin
+	if !dc.IsAdmin {
+		AdminRedirect(rw, r)
+	}
+	dc.Page = "pre_show"
+    err := templates.ExecuteTemplate(rw, "pre_show", &dc)
+	if err != nil {
+        http.Error(rw, err.Error(), http.StatusInternalServerError)
+    }
+}
