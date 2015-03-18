@@ -34,16 +34,15 @@
                             Admin <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a href="/admin/pre_show/">Pre-show Instructions</a></li>
-                            <li><a href="/admin/create_show/">Create Show</a></li>
-                            <li><a href="/admin/vote_types/">Add/Delete Vote Types</a></li>
-                            <li><a href="/admin/suggestion_pools/">Add/Delete Suggestion Pools</a></li>
-                            <li><a href="/admin/create_medals/">Add/Delete Medals</a></li>
-                            <li><a href="/admin/add_players/">Add Players</a></li>
-                            <li><a href="/admin/delete_tools/">Delete Tools</a></li>
-                            <li><a href="/admin/interval_timer/">Interval Timer</a></li>
-                            <li><a href="/admin/js_test/">Test JS</a></li>
-                            <li><a href="/admin/export_emails/">Export e-mails</a></li>
+                            <li {{if eq .Page "pre_show"}}class="active"{{end}}><a href="/admin/pre_show/">Pre-show Instructions</a></li>
+                            <li {{if eq .Page "create_show"}}class="active"{{end}}><a href="/admin/create_show/">Create Show</a></li>
+                            <li {{if eq .Page "vote_types"}}class="active"{{end}}><a href="/admin/vote_types/">Add/Delete Vote Types</a></li>
+                            <li {{if eq .Page "suggestion_pools"}}class="active"{{end}}><a href="/admin/suggestion_pools/">Add/Delete Suggestion Pools</a></li>
+                            <li {{if eq .Page "create_medals"}}class="active"{{end}}><a href="/admin/create_medals/">Add/Delete Medals</a></li>
+                            <li {{if eq .Page "add_players"}}class="active"{{end}}><a href="/admin/add_players/">Add Players</a></li>
+                            <li {{if eq .Page "delete_tools"}}class="active"{{end}}><a href="/admin/delete_tools/">Delete Tools</a></li>
+                            <li {{if eq .Page "js_test"}}class="active"{{end}}><a href="/admin/js_test/">Test JS</a></li>
+                            <li {{if eq .Page "export_emails"}}class="active"{{end}}><a href="/admin/export_emails/">Export e-mails</a></li>
                         </ul>
                     </li>
                 {{ end }}
