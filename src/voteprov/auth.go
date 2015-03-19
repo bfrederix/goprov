@@ -67,8 +67,6 @@ func AuthContext(rw http.ResponseWriter, r *http.Request, dc *DefaultContext) {
 	// Get the session id
 	session := SessionHandler(rw, r)
 	sessionID, _ := session.Values["id"].(string)
-	loggin, _ := user.LoginURL(c, r.URL.Path)
-	log.Println("Session data: ", loggin)
 	dc.SessionID = sessionID
 	// Try to get user profile by session
 	sessionParams := map[string]interface{}{"current_session": sessionID}
@@ -169,7 +167,6 @@ func NewSessionID(rw http.ResponseWriter, r *http.Request, session *sessions.Ses
 	rando := rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Create the session id in the cookie if it doesn't exist
 	session.Values["id"] = strconv.FormatInt(rando.Int63(), 10)
-	// Save it.
 	session.Save(r, rw)
 }
 

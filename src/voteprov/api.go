@@ -4,7 +4,9 @@ import (
     "net/http"
 	"log"
 	"encoding/json"
+	"github.com/gorilla/mux"
 )
+
 
 func PlayerAPIGetID(rw http.ResponseWriter, r *http.Request) {
 	// Get the player entity
@@ -43,4 +45,45 @@ func ShowsAPIGet(rw http.ResponseWriter, r *http.Request) {
 func LeardboardEntriesAPIGet(rw http.ResponseWriter, r *http.Request) {
 	_, leaderboardEntries := GetLeaderboardEntries(r, nil)
 	json.NewEncoder(rw).Encode(leaderboardEntries)
+}
+
+
+type UserDataStruct struct {
+	ShowEntries      []LeaderboardEntry
+	UserSuggestions  []Suggestion
+	LeaderboardStats []LeaderboardEntry
+	UserProfile      UserProfile
+}
+
+
+func UserDataAPI(rw http.ResponseWriter, r *http.Request) {
+	// Get user id path variable
+	vars := mux.Vars(r)
+	userId := vars["userId"]
+
+	// Get the show leaderboard entries by user id
+	showLeaderboardParams := map[string]interface{}{
+		"user_id": userId,
+		"order_by_show_date": "True"}
+	_, showLeaderboardEntries := GetLeaderboardEntries(r, showLeaderboardParams)
+
+	// Get the suggestions by the user id
+	suggestionParams := map[string]interface{}{"user_id": userId}
+	_, userSuggestions := GetSuggestions(r, suggestionParams)
+
+	// Get the leaderboard stats for the user
+	GetLeaderboardStats(r, nil, nil, nil)
+
+	// Get the user profile by user id
+	userProfileParams := map[string]interface{}{"user_id": userId}
+	_, userProfile := GetUserProfile(r, false, userProfileParams)
+
+	// Create the response json structure
+	uds := UserDataStruct{
+		ShowEntries:      showLeaderboardEntries,
+		UserSuggestions:  userSuggestions,
+		//LeaderboardStats: leaderboardStats,
+		UserProfile:      userProfile,
+	}
+	json.NewEncoder(rw).Encode(uds)
 }

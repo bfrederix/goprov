@@ -3,7 +3,10 @@ package voteprov
 
 import (
 	"fmt"
+	//"log"
     "time"
+	"strconv"
+	"net/http"
 	"appengine/datastore"
 )
 
@@ -147,19 +150,33 @@ type LeaderboardEntry struct {
 }
 
 
-//func (le *LeaderboardEntry) SetProperties() {
-//    le.Username = fmt.Sprintf("/static/img/players/%s", p.PhotoFilename)
-//}
+func (le *LeaderboardEntry) SetProperties(r *http.Request) {
+	// Try to get user profile by user id
+	userProfileParams := map[string]interface{}{"user_id": le.UserID}
+	_, userProfile := GetUserProfile(r, false, userProfileParams)
+	// Set the Username
+	le.Username = userProfile.Username
+	// Get the show id in string format
+	showIDString := strconv.FormatInt(le.Show.IntID(), 10)
+	//log.Println("Leaderboard Show: ", showIDString)
+	suggestionParams := map[string]interface{}{
+		"user_id": le.UserID,
+		"show": showIDString,
+	}
+	_, suggestions := GetSuggestions(r, suggestionParams)
+	// Set the number of suggestions by the user for the show
+	le.Suggestions = len(suggestions)
+}
 
 
 type UserProfile struct {
 	UserID         string    `datastore:"user_id" json:"user_id,omitempty"`
 	Username       string    `datastore:"username" json:"username,omitempty"`
 	StripUsername  string    `datastore:"strip_username" json:"strip_username,omitempty"`
-	Email          string    `datastore:"email" json:"email,omitempty"`
-	LoginType      string    `datastore:"login_type" json:"login_type,omitempty"`
-	CurrentSession string    `datastore:"current_session" json:"current_session,omitempty"`
-	FBAccessToken   string    `datastore:"fb_access_token" json:"fb_access_token,omitempty"`
+	Email          string    `datastore:"email" json:"-"`
+	LoginType      string    `datastore:"login_type" json:"-"`
+	CurrentSession string    `datastore:"current_session" json:"-"`
+	FBAccessToken  string    `datastore:"fb_access_token" json:"-"`
 	Created        time.Time `datastore:"created" json:"-"`
 }
 

@@ -28,7 +28,6 @@ func stringInSlice(a string, list []string) bool {
 func GetEntityKeyByIDs(c appengine.Context, modelType string, entityIdString string) (*datastore.Key) {
 	// Entity ID string to int
 	entityId, err := strconv.ParseInt(entityIdString, 0, 64)
-	log.Println("GetModelEntity: ", entityId)
 	if err != nil {
 		// Couldn't find the entity by ID
 		// Decode the key
@@ -67,6 +66,7 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 		"show",
 		"archived",
 		"order_by_created",
+		"order_by_show_date",
 	}
 	// Check to make sure the parameter passed is allowed
 	for key, _ := range params {
@@ -112,6 +112,15 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 		}
 		if orderByCreated == true {
 			q = q.Order("created")
+		}
+	}
+	if params["order_by_show_date"] != nil {
+		orderByCreated, err := strconv.ParseBool(params["order_by_show_date"].(string))
+		if err != nil {
+			panic(err.Error())
+		}
+		if orderByCreated == true {
+			q = q.Order("show_date")
 		}
 	}
 	// If we want to return only one item
@@ -283,7 +292,60 @@ func GetLeaderboardEntries(r *http.Request, params map[string]interface{}) ([]*d
         panic(err.Error())
     }
 
+	// Set the non-model fields
+	for i := range leaderboardEntries {
+	    leaderboardEntry := &leaderboardEntries[i]
+        leaderboardEntry.SetProperties(r)
+    }
+
 	return keys, leaderboardEntries
+}
+
+
+func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interface{}, endDate interface{}) {
+	c := appengine.NewContext(r)
+	var leaderboardStatParams map[string]interface{}
+	// If a user was specified
+	if userIDString, ok := userID.(string); ok {
+		// Add it to the query params
+		leaderboardStatParams["user_id"] = userIDString
+	}
+	_, leaderboardEntries := GetLeaderboardEntries(r, leaderboardStatParams)
+
+	for i := range leaderboardEntries {
+	    leaderboardEntry := &leaderboardEntries[i]
+		// Get the show key and load data
+    	var show Show
+    	datastore.Get(c, leaderboardEntry.Show, &show)
+		// If start and end date were specified
+        if _, ok := startDate.(time.Time); ok {
+			if _, ok := endDate.(time.Time); ok {
+				log.Println("leaderboardEntry.Show.Created: ", show.Created)
+			}
+		} else {
+			log.Println("leaderboardEntry.Show.Created: ", show.Created)
+		}
+    }
+}
+
+
+func GetSuggestions(r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Suggestion) {
+	c := appengine.NewContext(r)
+	var q *datastore.Query
+	// If parameters were specified
+	if params != nil {
+		q = GetModelEntities(c, "Suggestion", 0, params)
+	} else {
+		// Otherwise use query params from url
+		q = WebQueryEntities(c, r, "Suggestion", 1)
+	}
+	var suggestions []Suggestion
+	keys, err := q.GetAll(c, &suggestions)
+	if err != nil {
+        panic(err.Error())
+    }
+
+	return keys, suggestions
 }
 
 
