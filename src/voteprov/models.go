@@ -146,7 +146,7 @@ type LeaderboardEntry struct {
 	Wins        int64            `datastore:"wins" json:"wins,omitempty"`
 	Medals      []*datastore.Key `datastore:"medals" json:"medals,omitempty"`
 	Username    string           `json:"username"`
-	Suggestions int              `json:"suggestions"`
+	Suggestions int64              `json:"suggestions"`
 }
 
 

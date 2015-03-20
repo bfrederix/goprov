@@ -302,6 +302,21 @@ func GetLeaderboardEntries(r *http.Request, params map[string]interface{}) ([]*d
 }
 
 
+type UserTotal struct {
+	Username    string
+	Points      int64
+	Wins        int64
+	Medals      []*datastore.Key
+	Suggestions int64
+	Level       int64
+}
+
+
+func AddToUserTotal(userTotals *map[string]UserTotal, leaderboardEntry LeaderboardEntry) {
+
+}
+
+
 func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interface{}, endDate interface{}) {
 	c := appengine.NewContext(r)
 	var leaderboardStatParams map[string]interface{}
@@ -312,6 +327,8 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
 	}
 	_, leaderboardEntries := GetLeaderboardEntries(r, leaderboardStatParams)
 
+	// Initialize the Stats map
+	var userTotals map[string]UserTotal
 	for i := range leaderboardEntries {
 	    leaderboardEntry := &leaderboardEntries[i]
 		// Get the show key and load data
@@ -320,7 +337,10 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
 		// If start and end date were specified
         if _, ok := startDate.(time.Time); ok {
 			if _, ok := endDate.(time.Time); ok {
-				log.Println("leaderboardEntry.Show.Created: ", show.Created)
+				// If the entry falls within the date span
+				if startDate <= show.Created && show.Created <= endDate {
+					log.Println("leaderboardEntry.Show.Created: ", show.Created)
+				}
 			}
 		} else {
 			log.Println("leaderboardEntry.Show.Created: ", show.Created)
