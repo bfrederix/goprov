@@ -312,7 +312,29 @@ type UserTotal struct {
 }
 
 
-func AddToUserTotal(userTotals *map[string]UserTotal, leaderboardEntry LeaderboardEntry) {
+func AddToUserTotal(userTotals *map[string]*UserTotal, leaderboardEntry LeaderboardEntry) {
+	// If there isn't an entry for this user yet
+	if _, ok := (*userTotals)[leaderboardEntry.UserID]; !ok {
+		var username string
+		s := strings.Split(leaderboardEntry.Username, "@")
+		username = s[0]
+		(*userTotals)[leaderboardEntry.UserID] = &UserTotal{
+			Username: username,
+			Points: 0,
+			Wins: 0,
+			Medals: nil,
+			Suggestions: 0,
+			Level: 0,
+		}
+	}
+	// Add the points, wins, medals, and suggestions for this user
+	(*userTotals)[leaderboardEntry.UserID].Points = (*userTotals)[leaderboardEntry.UserID].Points + leaderboardEntry.Points
+	(*userTotals)[leaderboardEntry.UserID].Wins = (*userTotals)[leaderboardEntry.UserID].Wins + leaderboardEntry.Wins
+	(*userTotals)[leaderboardEntry.UserID].Suggestions = (*userTotals)[leaderboardEntry.UserID].Suggestions + leaderboardEntry.Suggestions
+	// Add the medal keys to the list of medals
+	for i := range leaderboardEntry.Medals {
+		(*userTotals)[leaderboardEntry.UserID].Medals = append((*userTotals)[leaderboardEntry.UserID].Medals, leaderboardEntry.Medals[i])
+	}
 
 }
 
@@ -328,7 +350,7 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
 	_, leaderboardEntries := GetLeaderboardEntries(r, leaderboardStatParams)
 
 	// Initialize the Stats map
-	var userTotals map[string]UserTotal
+	var userTotals map[string]*UserTotal
 	for i := range leaderboardEntries {
 	    leaderboardEntry := &leaderboardEntries[i]
 		// Get the show key and load data
@@ -338,12 +360,14 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
         if _, ok := startDate.(time.Time); ok {
 			if _, ok := endDate.(time.Time); ok {
 				// If the entry falls within the date span
-				if startDate <= show.Created && show.Created <= endDate {
-					log.Println("leaderboardEntry.Show.Created: ", show.Created)
-				}
+				// THIS IS BROKEN: if startDate.(time.Time) <= show.Created && show.Created <= endDate {
+				log.Println("leaderboardEntry.Show.Created: ", show.Created)
+				AddToUserTotal(&userTotals, *leaderboardEntry)
+				//}
 			}
 		} else {
 			log.Println("leaderboardEntry.Show.Created: ", show.Created)
+			AddToUserTotal(&userTotals, *leaderboardEntry)
 		}
     }
 }

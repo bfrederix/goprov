@@ -165,7 +165,7 @@ func (le *LeaderboardEntry) SetProperties(r *http.Request) {
 	}
 	_, suggestions := GetSuggestions(r, suggestionParams)
 	// Set the number of suggestions by the user for the show
-	le.Suggestions = len(suggestions)
+	le.Suggestions = int64(len(suggestions))
 }
 
 
