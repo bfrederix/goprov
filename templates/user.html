@@ -2,11 +2,19 @@
     <html>
       <head>
           {{template "base_header" .}}
-          <title>Adventure-prov My Account</title>
+          <title>Adventure-prov User</title>
       <body>
         <!-- Add facebook_sdk -->
         {{template "top_nav" .}}
-        <p>My Account: </p>
+        <div id="container-fluid"></div>
+        <script type="text/jsx">
+          {{template "react_components" .}}
+          React.render(
+            <Panel panelWidth="6" panelOffset="3" panelColor="danger"
+            panelHeadingContent="Example" panelHeadingSize="x-large-font"/>,
+            document.getElementById('container-fluid')
+          );
+        </script>
       </body>
     </html>
 {{ end }}

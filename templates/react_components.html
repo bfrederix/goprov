@@ -1,0 +1,42 @@
+{{define "react_components"}}
+var PanelHeader = React.createClass({
+  render: function() {
+    return (
+      <div className="panel-heading {this.props.panelHeadingSize}">{this.props.panelHeadingContent} Crappy</div>
+    );
+  }
+});
+
+var PanelBody = React.createClass({
+  render: function() {
+    return (
+      <div className="panel-body">
+        Crap
+      </div>
+    );
+  }
+});
+
+var Panel = React.createClass({
+  render: function() {
+    var cx = React.addons.classSet;
+    var panelWidth = "col-md-"+this.props.panelWidth;
+    var panelOffset = "col-md-offset-"+this.props.panelOffset;
+    var colClasses = cx('col', panelWidth, panelOffset);
+    var panelC = "panel";
+    var panelColor = "panel-"+ this.props.panelColor;
+    var panelClasses = cx('panel', panelC, panelColor);
+    return (
+      <div className="row">
+        <div className="{colClasses}">
+          <div className="{panelClasses}">
+              <PanelHeader panelHeadingContent={this.props.panelHeadingContent}
+                           panelHeadingSize={this.props.panelHeadingSize}/>
+              <PanelBody />
+          </div>
+        </div>
+      </div>
+    );
+  }
+});
+{{ end }}
