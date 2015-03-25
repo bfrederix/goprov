@@ -51,7 +51,7 @@ func LeardboardEntriesAPIGet(rw http.ResponseWriter, r *http.Request) {
 type UserDataStruct struct {
 	ShowEntries      []LeaderboardEntry
 	UserSuggestions  []Suggestion
-	LeaderboardStats []LeaderboardEntry
+	LeaderboardStats UserTotals
 	UserProfile      UserProfile
 }
 
@@ -72,7 +72,7 @@ func UserDataAPI(rw http.ResponseWriter, r *http.Request) {
 	_, userSuggestions := GetSuggestions(r, suggestionParams)
 
 	// Get the leaderboard stats for the user
-	GetLeaderboardStats(r, nil, nil, nil)
+	leaderboardStats := GetLeaderboardStats(r, userId, nil, nil)
 
 	// Get the user profile by user id
 	userProfileParams := map[string]interface{}{"user_id": userId}
@@ -82,7 +82,7 @@ func UserDataAPI(rw http.ResponseWriter, r *http.Request) {
 	uds := UserDataStruct{
 		ShowEntries:      showLeaderboardEntries,
 		UserSuggestions:  userSuggestions,
-		//LeaderboardStats: leaderboardStats,
+		LeaderboardStats: leaderboardStats,
 		UserProfile:      userProfile,
 	}
 	json.NewEncoder(rw).Encode(uds)

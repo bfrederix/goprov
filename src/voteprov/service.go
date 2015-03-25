@@ -6,6 +6,7 @@ import (
 	"time"
 	"strings"
 	"strconv"
+	"sort"
 	"github.com/gorilla/mux"
 	"appengine"
     "appengine/datastore"
@@ -240,7 +241,7 @@ func GetPlayers(r *http.Request, params map[string]interface{}) ([]*datastore.Ke
 		q = GetModelEntities(c, "Player", 0, params)
 	} else {
 		// Otherwise use query params from url
-		q = WebQueryEntities(c, r, "Player", 1)
+		q = WebQueryEntities(c, r, "Player", 0)
 	}
 	var players []Player
 	keys, err := q.GetAll(c, &players)
@@ -264,7 +265,7 @@ func GetShows(r *http.Request, params map[string]interface{}) ([]*datastore.Key,
 		q = GetModelEntities(c, "Show", 0, params)
 	} else {
 		// Otherwise use query params from url
-		q = WebQueryEntities(c, r, "Show", 1)
+		q = WebQueryEntities(c, r, "Show", 0)
 	}
 	var shows []Show
 	keys, err := q.GetAll(c, &shows)
@@ -284,7 +285,7 @@ func GetLeaderboardEntries(r *http.Request, params map[string]interface{}) ([]*d
 		q = GetModelEntities(c, "LeaderboardEntry", 0, params)
 	} else {
 		// Otherwise use query params from url
-		q = WebQueryEntities(c, r, "LeaderboardEntry", 1)
+		q = WebQueryEntities(c, r, "LeaderboardEntry", 0)
 	}
 	var leaderboardEntries []LeaderboardEntry
 	keys, err := q.GetAll(c, &leaderboardEntries)
@@ -304,6 +305,7 @@ func GetLeaderboardEntries(r *http.Request, params map[string]interface{}) ([]*d
 
 type UserTotal struct {
 	Username    string
+	UserID      string
 	Points      int64
 	Wins        int64
 	Medals      []*datastore.Key
@@ -312,20 +314,44 @@ type UserTotal struct {
 }
 
 
+type UserTotals []UserTotal
+
+//Set up how to sort UserTotal
+func (slice UserTotals) Len() int {
+    return len(slice)
+}
+
+
+func (slice UserTotals) Less(i, j int) bool {
+    return slice[i].Points < slice[j].Points;
+}
+
+
+func (slice UserTotals) Swap(i, j int) {
+    slice[i], slice[j] = slice[j], slice[i]
+}
+
+
+const levelSize int64 = 30
+
 func AddToUserTotal(userTotals *map[string]*UserTotal, leaderboardEntry LeaderboardEntry) {
 	// If there isn't an entry for this user yet
 	if _, ok := (*userTotals)[leaderboardEntry.UserID]; !ok {
 		var username string
+		var medals []*datastore.Key
 		s := strings.Split(leaderboardEntry.Username, "@")
 		username = s[0]
-		(*userTotals)[leaderboardEntry.UserID] = &UserTotal{
+		ut := &UserTotal{
 			Username: username,
+			UserID: leaderboardEntry.UserID,
 			Points: 0,
 			Wins: 0,
-			Medals: nil,
+			Medals: medals,
 			Suggestions: 0,
 			Level: 0,
 		}
+		log.Println("leaderboardEntry.UserID: ", leaderboardEntry.UserID)
+		(*userTotals)[leaderboardEntry.UserID] = ut
 	}
 	// Add the points, wins, medals, and suggestions for this user
 	(*userTotals)[leaderboardEntry.UserID].Points = (*userTotals)[leaderboardEntry.UserID].Points + leaderboardEntry.Points
@@ -335,13 +361,14 @@ func AddToUserTotal(userTotals *map[string]*UserTotal, leaderboardEntry Leaderbo
 	for i := range leaderboardEntry.Medals {
 		(*userTotals)[leaderboardEntry.UserID].Medals = append((*userTotals)[leaderboardEntry.UserID].Medals, leaderboardEntry.Medals[i])
 	}
-
+	// Calculate the user level
+	(*userTotals)[leaderboardEntry.UserID].Level = ((*userTotals)[leaderboardEntry.UserID].Points / levelSize) + 1
 }
 
 
-func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interface{}, endDate interface{}) {
+func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interface{}, endDate interface{}) UserTotals {
 	c := appengine.NewContext(r)
-	var leaderboardStatParams map[string]interface{}
+	leaderboardStatParams := make(map[string]interface{})
 	// If a user was specified
 	if userIDString, ok := userID.(string); ok {
 		// Add it to the query params
@@ -350,7 +377,7 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
 	_, leaderboardEntries := GetLeaderboardEntries(r, leaderboardStatParams)
 
 	// Initialize the Stats map
-	var userTotals map[string]*UserTotal
+	userTotals := make(map[string]*UserTotal)
 	for i := range leaderboardEntries {
 	    leaderboardEntry := &leaderboardEntries[i]
 		// Get the show key and load data
@@ -370,6 +397,14 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
 			AddToUserTotal(&userTotals, *leaderboardEntry)
 		}
     }
+	//Turn the map into a slice
+	var orderedTotals UserTotals
+	for _, userTotal := range userTotals {
+		orderedTotals = append(orderedTotals, *userTotal)
+	}
+	// Order the totals by points
+	sort.Sort(orderedTotals)
+	return orderedTotals
 }
 
 
@@ -381,7 +416,7 @@ func GetSuggestions(r *http.Request, params map[string]interface{}) ([]*datastor
 		q = GetModelEntities(c, "Suggestion", 0, params)
 	} else {
 		// Otherwise use query params from url
-		q = WebQueryEntities(c, r, "Suggestion", 1)
+		q = WebQueryEntities(c, r, "Suggestion", 0)
 	}
 	var suggestions []Suggestion
 	keys, err := q.GetAll(c, &suggestions)
