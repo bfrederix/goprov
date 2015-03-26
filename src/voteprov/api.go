@@ -36,6 +36,12 @@ func PlayersAPIGet(rw http.ResponseWriter, r *http.Request) {
 }
 
 
+func ShowAPIGetID(rw http.ResponseWriter, r *http.Request) {
+	_, show := GetShow(r, true, nil)
+	json.NewEncoder(rw).Encode(show)
+}
+
+
 func ShowsAPIGet(rw http.ResponseWriter, r *http.Request) {
 	_, shows := GetShows(r, nil)
 	json.NewEncoder(rw).Encode(shows)

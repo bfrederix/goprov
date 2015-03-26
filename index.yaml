@@ -14,3 +14,9 @@ indexes:
   properties:
   - name: user_id
   - name: show_date
+
+- kind: LeaderboardEntry
+  properties:
+  - name: user_id
+  - name: show_date
+    direction: desc

@@ -13,6 +13,7 @@ func CreateHandler() *mux.Router {
 	s.HandleFunc("/player/{entityId}/", PlayerAPIGetID)
 	s.HandleFunc("/player/", PlayerAPIGetQuery)
 	s.HandleFunc("/players/", PlayersAPIGet)
+	s.HandleFunc("/show/{entityId}/", ShowAPIGetID)
 	s.HandleFunc("/shows/", ShowsAPIGet)
 	s.HandleFunc("/leaderboard_entries/", LeaderboardEntriesAPIGet)
 	s.HandleFunc("/suggestions/", SuggestionsAPIGet)

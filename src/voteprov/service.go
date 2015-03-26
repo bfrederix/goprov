@@ -121,7 +121,7 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 			panic(err.Error())
 		}
 		if orderByCreated == true {
-			q = q.Order("show_date")
+			q = q.Order("-show_date")
 		}
 	}
 	// If we want to return only one item
@@ -188,6 +188,41 @@ func GetPlayer(r *http.Request, hasID bool, params map[string]interface{}) (*dat
 		// Set the non-model fields
 		players[0].SetProperties()
 		return keys[0], players[0]
+	}
+}
+
+
+func GetShow(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, Show) {
+	c := appengine.NewContext(r)
+	if hasID == true {
+		var show Show
+		showKey := GetEntityKeyByURLIDs(c, r, "Show")
+
+		// Try to load the data into the Show struct model
+		if err := datastore.Get(c, showKey, &show); err != nil {
+			panic(err.Error())
+		}
+		return showKey, show
+	} else {
+		var shows []Show
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			q = GetModelEntities(c, "Show", 1, params)
+		} else {
+			// Otherwise use query params from url
+			q = WebQueryEntities(c, r, "Show", 1)
+		}
+		keys, err := q.GetAll(c, &shows)
+		if err != nil {
+			panic(err.Error())
+		}
+		// If nothing was found
+		if shows == nil {
+			return &datastore.Key{}, Show{}
+		}
+
+		return keys[0], shows[0]
 	}
 }
 

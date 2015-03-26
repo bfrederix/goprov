@@ -80,11 +80,12 @@ type Suggestion struct {
 	AmountVotedOn  int64          `datastore:"amount_voted_on" json:"amount_voted_on,omitempty"`
 	Value          string         `datastore:"value" json:"value,omitempty"`
 	PreshowValue   int64          `datastore:"preshow_value" json:"preshow_value,omitempty"`
-	SessionID      string         `datastore:"session_id" json:"session_id,omitempty"`
+	SessionID      string         `datastore:"session_id" json:"-"`
 	UserID         string         `datastore:"user_id" json:"user_id,omitempty"`
 	Created        time.Time      `datastore:"created" json:"-"`
 }
 
+// Need an md5 of session id to validate pre-show from (so we don't straight up give away the id)
 
 type PreshowVote struct {
 	Show           *datastore.Key `datastore:"show" json:"show,omitempty"`
