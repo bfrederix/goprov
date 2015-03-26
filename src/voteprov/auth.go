@@ -70,7 +70,7 @@ func AuthContext(rw http.ResponseWriter, r *http.Request, dc *DefaultContext) {
 	dc.SessionID = sessionID
 	// Try to get user profile by session
 	sessionParams := map[string]interface{}{"current_session": sessionID}
-	_, userProfile := GetUserProfile(r, false, sessionParams)
+	_, userProfile := GetUserProfiles(r, false, sessionParams)
 	log.Println("userProfile: ", userProfile)
 	// If the user doesn't exists, return
 	if u == nil {
@@ -103,7 +103,7 @@ func AuthContext(rw http.ResponseWriter, r *http.Request, dc *DefaultContext) {
 func GoogleLogin(r *http.Request, c appengine.Context, u *user.User, dc *DefaultContext) UserProfile {
 	// Try to get user profile by user id
 	userIDParams := map[string]interface{}{"user_id": u.ID}
-	upKey, userProfile := GetUserProfile(r, false, userIDParams)
+	upKey, userProfile := GetUserProfiles(r, false, userIDParams)
 	log.Println("ID Based: ", userProfile)
 	// If the user profile was found, return
 	if userProfile.UserID != "" {
@@ -114,7 +114,7 @@ func GoogleLogin(r *http.Request, c appengine.Context, u *user.User, dc *Default
 	} else {
 		// Try to get user profile by user id
 		userEmailParams := map[string]interface{}{"email": u.Email}
-		upKey, userProfile := GetUserProfile(r, false, userEmailParams)
+		upKey, userProfile := GetUserProfiles(r, false, userEmailParams)
 		log.Println("Email Based: ", userProfile)
 		// If the user profile was found, return
 		if userProfile.UserID != "" {

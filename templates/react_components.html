@@ -1,22 +1,4 @@
 {{define "react_components"}}
-var PanelHeader = React.createClass({
-  render: function() {
-    return (
-      <div className="panel-heading {this.props.panelHeadingSize}">{this.props.panelHeadingContent} Crappy</div>
-    );
-  }
-});
-
-var PanelBody = React.createClass({
-  render: function() {
-    return (
-      <div className="panel-body">
-        Crap
-      </div>
-    );
-  }
-});
-
 var Panel = React.createClass({
   render: function() {
     var cx = React.addons.classSet;
@@ -28,15 +10,124 @@ var Panel = React.createClass({
     var panelClasses = cx('panel', panelC, panelColor);
     return (
       <div className="row">
-        <div className="{colClasses}">
-          <div className="{panelClasses}">
-              <PanelHeader panelHeadingContent={this.props.panelHeadingContent}
-                           panelHeadingSize={this.props.panelHeadingSize}/>
-              <PanelBody />
+        <div className={colClasses}>
+          <div className={panelClasses}>
+              <PanelHeader panelHeadingClasses={this.props.panelHeadingClasses}
+                           panelHeadingContent={this.props.panelHeadingContent}/>
+              <PanelBody panelBodyClasses={this.props.panelBodyClasses}
+                         tableClasses={this.props.tableClasses}
+                         tableType={this.props.tableType}/>
           </div>
         </div>
       </div>
     );
   }
 });
+
+var PanelHeader = React.createClass({
+  render: function() {
+    var cx = React.addons.classSet;
+    var ppanelHeadingClasses = this.props.panelHeadingClasses;
+    var panelHeading = "panel-heading";
+    var panelHeaderClasses = cx('panel-header', panelHeading, ppanelHeadingClasses);
+    return (
+      <div className={panelHeaderClasses}>{this.props.panelHeadingContent}</div>
+    );
+  }
+});
+
+var PanelBody = React.createClass({
+  render: function() {
+    var cx = React.addons.classSet;
+    var ppanelBodyClasses = this.props.panelBodyClasses;
+    var panelBody = "panel-body";
+    var panelBodyClasses = cx('panel-body', panelBody, ppanelBodyClasses);
+    // Decide whether or not to show a table
+    var tableElement;
+    if (this.props.tableClasses) {
+        tableElement = <Table tableClasses={this.props.tableClasses}
+                              tableType={this.props.tableType}/>;
+    }
+    return (
+      <div className={panelBodyClasses}>
+        {tableElement}
+      </div>
+    );
+  }
+});
+
+var Table = React.createClass({
+  render: function() {
+    var cx = React.addons.classSet;
+    var ptableClasses = this.props.tableClasses;
+    var table = "table";
+    var tableClasses = cx('table', table, ptableClasses);
+    // Decide what table to show
+    var tableBody;
+    if (this.props.tableType == "user-stats") {
+        tableBody = <UserStatsTableBody userStatsColumnColor={this.props.userStatsColumnColor} />;
+    }
+    return (
+      <table className={tableClasses}>
+        {tableBody}
+      </table>
+    );
+  }
+});
+
+var UserStatsTableBody = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  componentDidMount: function() {
+    // Get the user id, default from url path
+    var userID;
+    if (this.props.userID) {
+        userID = this.props.userID;
+    } else {
+        // Default to getting the userID from the url
+        var pathArray = window.location.pathname.split( '/' );
+        userID = pathArray[2];
+    }
+
+    // Get the leaderboard stats for the user
+    var leaderboardStatsUrl = "/api/v1/leaderboards/user/" + userID + "/";
+    $.ajax({
+      url: leaderboardStatsUrl,
+      dataType: 'json',
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  render: function() {
+    // Decide the stat column color
+    var columnColor;
+    if (this.props.userStatsColumnColor) {
+        columnColor = this.props.userStatsColumnColor;
+    } else {
+        columnColor = "warning";
+    }
+    var cx = React.addons.classSet;
+    var tdClasses = cx('table-column', columnColor);
+    // Get the username
+    var statsElement = this.state.data.map(function (userStats) {
+      var statsList = [];
+      statsList.push(<tr><td className={tdClasses}>Username: {userStats.Username}</td></tr>);
+      statsList.push(<tr><td className={tdClasses}>Suggestions: {userStats.Suggestions}</td></tr>);
+      statsList.push(<tr><td className={tdClasses}>Suggestion Wins: {userStats.Wins}</td></tr>);
+      statsList.push(<tr><td className={tdClasses}>Points: {userStats.Points}</td></tr>);
+      return statsList;
+    });
+    return (
+      <tbody>
+        {statsElement}
+      </tbody>
+    );
+  }
+});
+
 {{ end }}

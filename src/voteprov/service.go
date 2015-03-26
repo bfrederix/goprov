@@ -192,7 +192,7 @@ func GetPlayer(r *http.Request, hasID bool, params map[string]interface{}) (*dat
 }
 
 
-func GetUserProfile(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, UserProfile) {
+func GetUserProfiles(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, UserProfile) {
 	c := appengine.NewContext(r)
 	if hasID == true {
 		var userProfile UserProfile
@@ -303,6 +303,26 @@ func GetLeaderboardEntries(r *http.Request, params map[string]interface{}) ([]*d
 }
 
 
+func GetSuggestions(r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Suggestion) {
+	c := appengine.NewContext(r)
+	var q *datastore.Query
+	// If parameters were specified
+	if params != nil {
+		q = GetModelEntities(c, "Suggestion", 0, params)
+	} else {
+		// Otherwise use query params from url
+		q = WebQueryEntities(c, r, "Suggestion", 0)
+	}
+	var suggestions []Suggestion
+	keys, err := q.GetAll(c, &suggestions)
+	if err != nil {
+        panic(err.Error())
+    }
+
+	return keys, suggestions
+}
+
+
 type UserTotal struct {
 	Username    string
 	UserID      string
@@ -405,26 +425,6 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
 	// Order the totals by points
 	sort.Sort(orderedTotals)
 	return orderedTotals
-}
-
-
-func GetSuggestions(r *http.Request, params map[string]interface{}) ([]*datastore.Key, []Suggestion) {
-	c := appengine.NewContext(r)
-	var q *datastore.Query
-	// If parameters were specified
-	if params != nil {
-		q = GetModelEntities(c, "Suggestion", 0, params)
-	} else {
-		// Otherwise use query params from url
-		q = WebQueryEntities(c, r, "Suggestion", 0)
-	}
-	var suggestions []Suggestion
-	keys, err := q.GetAll(c, &suggestions)
-	if err != nil {
-        panic(err.Error())
-    }
-
-	return keys, suggestions
 }
 
 

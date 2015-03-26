@@ -11,7 +11,10 @@
           {{template "react_components" .}}
           React.render(
             <Panel panelWidth="6" panelOffset="3" panelColor="danger"
-            panelHeadingContent="Example" panelHeadingSize="x-large-font"/>,
+            panelHeadingContent="User Account" panelHeadingClasses="x-large-font"
+            panelBodyClasses="large-font black-font"
+            tableClasses="table-condensed black-font"
+            tableType="user-stats"/>,
             document.getElementById('container-fluid')
           );
         </script>

@@ -14,9 +14,10 @@ func CreateHandler() *mux.Router {
 	s.HandleFunc("/player/", PlayerAPIGetQuery)
 	s.HandleFunc("/players/", PlayersAPIGet)
 	s.HandleFunc("/shows/", ShowsAPIGet)
-	s.HandleFunc("/leaderboard_entries/", LeardboardEntriesAPIGet)
-	s.HandleFunc("/user/{userId}/", UserDataAPI)
-
+	s.HandleFunc("/leaderboard_entries/", LeaderboardEntriesAPIGet)
+	s.HandleFunc("/suggestions/", SuggestionsAPIGet)
+	s.HandleFunc("/user_profiles/", UserProfilesAPIGet)
+	s.HandleFunc("/leaderboards/user/{userId:[0-9]+}/", UserLeaderboardStatsGet)
 	// User Pages
 	h := r.PathPrefix("/").Subrouter()
 	h.HandleFunc("/", HomePage)

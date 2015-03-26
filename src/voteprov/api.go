@@ -42,48 +42,30 @@ func ShowsAPIGet(rw http.ResponseWriter, r *http.Request) {
 }
 
 
-func LeardboardEntriesAPIGet(rw http.ResponseWriter, r *http.Request) {
+func LeaderboardEntriesAPIGet(rw http.ResponseWriter, r *http.Request) {
+	//user_id + order_by_show_date available
 	_, leaderboardEntries := GetLeaderboardEntries(r, nil)
 	json.NewEncoder(rw).Encode(leaderboardEntries)
 }
 
 
-type UserDataStruct struct {
-	ShowEntries      []LeaderboardEntry
-	UserSuggestions  []Suggestion
-	LeaderboardStats UserTotals
-	UserProfile      UserProfile
+func SuggestionsAPIGet(rw http.ResponseWriter, r *http.Request) {
+	_, userSuggestions := GetSuggestions(r, nil)
+	json.NewEncoder(rw).Encode(userSuggestions)
 }
 
 
-func UserDataAPI(rw http.ResponseWriter, r *http.Request) {
+func UserProfilesAPIGet(rw http.ResponseWriter, r *http.Request) {
+	_, userProfiles := GetUserProfiles(r, false, nil)
+	json.NewEncoder(rw).Encode(userProfiles)
+}
+
+
+func UserLeaderboardStatsGet(rw http.ResponseWriter, r *http.Request) {
 	// Get user id path variable
 	vars := mux.Vars(r)
 	userId := vars["userId"]
-
-	// Get the show leaderboard entries by user id
-	showLeaderboardParams := map[string]interface{}{
-		"user_id": userId,
-		"order_by_show_date": "True"}
-	_, showLeaderboardEntries := GetLeaderboardEntries(r, showLeaderboardParams)
-
-	// Get the suggestions by the user id
-	suggestionParams := map[string]interface{}{"user_id": userId}
-	_, userSuggestions := GetSuggestions(r, suggestionParams)
-
 	// Get the leaderboard stats for the user
 	leaderboardStats := GetLeaderboardStats(r, userId, nil, nil)
-
-	// Get the user profile by user id
-	userProfileParams := map[string]interface{}{"user_id": userId}
-	_, userProfile := GetUserProfile(r, false, userProfileParams)
-
-	// Create the response json structure
-	uds := UserDataStruct{
-		ShowEntries:      showLeaderboardEntries,
-		UserSuggestions:  userSuggestions,
-		LeaderboardStats: leaderboardStats,
-		UserProfile:      userProfile,
-	}
-	json.NewEncoder(rw).Encode(uds)
+	json.NewEncoder(rw).Encode(leaderboardStats)
 }

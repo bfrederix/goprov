@@ -153,7 +153,7 @@ type LeaderboardEntry struct {
 func (le *LeaderboardEntry) SetProperties(r *http.Request) {
 	// Try to get user profile by user id
 	userProfileParams := map[string]interface{}{"user_id": le.UserID}
-	_, userProfile := GetUserProfile(r, false, userProfileParams)
+	_, userProfile := GetUserProfiles(r, false, userProfileParams)
 	// Set the Username
 	le.Username = userProfile.Username
 	// Get the show id in string format
