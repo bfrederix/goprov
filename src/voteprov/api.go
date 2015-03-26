@@ -61,6 +61,12 @@ func UserProfilesAPIGet(rw http.ResponseWriter, r *http.Request) {
 }
 
 
+func MedalAPIGetID(rw http.ResponseWriter, r *http.Request) {
+	_, player := GetMedal(r, true, nil)
+	json.NewEncoder(rw).Encode(player)
+}
+
+
 func UserLeaderboardStatsGet(rw http.ResponseWriter, r *http.Request) {
 	// Get user id path variable
 	vars := mux.Vars(r)

@@ -1,4 +1,18 @@
 {{define "react_components"}}
+
+function getUserFromPropsOrURL(props, position){
+    // Get the user id, default from url path
+    var userID;
+    if (props.userID) {
+        userID = props.userID;
+    } else {
+        // Default to getting the userID from the url
+        var pathArray = window.location.pathname.split( '/' );
+        userID = pathArray[position];
+    }
+    return userID;
+}
+
 var Panel = React.createClass({
   render: function() {
     var cx = React.addons.classSet;
@@ -75,21 +89,77 @@ var Table = React.createClass({
   }
 });
 
+var Medal = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  componentDidMount: function() {
+    // Get the medal data for the given key
+    var medalUrl = "/api/v1/medal/" + this.props.medalKey + "/";
+    $.ajax({
+      url: medalUrl,
+      dataType: 'json',
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  render: function() {
+    // Create the medal URL
+    var medalURL = "/medals/#" + this.state.data.name;
+    // Create the medal classes
+    var cx = React.addons.classSet;
+    var medalClass = this.state.data.name + "-medal";
+    var medalClasses = cx('medal', medalClass, "pull-left");
+    return (
+      <a href={medalURL}><div className={medalClasses}></div></a>
+    );
+  }
+});
+
+var LevelMedal = React.createClass({
+  render: function() {
+    return (
+      <a href="/medals/#level-medal"><div className="level-medal"><div className="level-number">{this.props.medalLevel}</div></div></a>
+    );
+  }
+});
+
+var MedalRows = React.createClass({
+  render: function() {
+    var arrayLength = this.props.medals.length;
+    var rowList = [];
+    var medalList = [];
+    // Go through all the medal keys
+    for (var i = 0; i < arrayLength; i++) {
+        var medalKey = this.props.medals[i];
+        medalList.push(<Medal medalKey={medalKey} />);
+        var currentNum = i+1;
+        // Push the row and reset the current medal list every 3 medals
+        if (currentNum % 3 == 0) {
+            rowList.push(<div className="row">{medalList}</div>);
+            medalList = [];
+        }
+    }
+    // If there are any remaining medals, form a remainder row
+    if (medalList) {
+        rowList.push(<div className="row">{medalList}</div>);
+    }
+    return (
+        <div>{rowList}</div>
+    );
+  }
+});
+
 var UserStatsTableBody = React.createClass({
   getInitialState: function() {
     return {data: []};
   },
   componentDidMount: function() {
-    // Get the user id, default from url path
-    var userID;
-    if (this.props.userID) {
-        userID = this.props.userID;
-    } else {
-        // Default to getting the userID from the url
-        var pathArray = window.location.pathname.split( '/' );
-        userID = pathArray[2];
-    }
-
+    userID = getUserFromPropsOrURL(this.props, 2);
     // Get the leaderboard stats for the user
     var leaderboardStatsUrl = "/api/v1/leaderboards/user/" + userID + "/";
     $.ajax({
@@ -104,6 +174,7 @@ var UserStatsTableBody = React.createClass({
     });
   },
   render: function() {
+    userID = getUserFromPropsOrURL(this.props, 2);
     // Decide the stat column color
     var columnColor;
     if (this.props.userStatsColumnColor) {
@@ -111,15 +182,30 @@ var UserStatsTableBody = React.createClass({
     } else {
         columnColor = "warning";
     }
+    // Define classes
     var cx = React.addons.classSet;
     var tdClasses = cx('table-column', columnColor);
-    // Get the username
+    // Create the user stats
     var statsElement = this.state.data.map(function (userStats) {
       var statsList = [];
+      var medalShare;
+      if (userID == userStats.UserID) {
+        medalShare = <img className="facebook-share" src="http://localhost:8080{{.DC.ImagePath}}facebook_share.png" />;
+      }
       statsList.push(<tr><td className={tdClasses}>Username: {userStats.Username}</td></tr>);
       statsList.push(<tr><td className={tdClasses}>Suggestions: {userStats.Suggestions}</td></tr>);
       statsList.push(<tr><td className={tdClasses}>Suggestion Wins: {userStats.Wins}</td></tr>);
       statsList.push(<tr><td className={tdClasses}>Points: {userStats.Points}</td></tr>);
+      statsList.push(<tr><td>
+                        Point Level:
+                        <LevelMedal medalLevel={userStats.Level} />
+                        {medalShare}
+                     </td></tr>);
+      statsList.push(<tr><td>
+                        Medals:<br/>
+                        <MedalRows medals={userStats.Medals} />
+                     </td></tr>);
+
       return statsList;
     });
     return (

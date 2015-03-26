@@ -230,6 +230,40 @@ func GetUserProfiles(r *http.Request, hasID bool, params map[string]interface{})
 }
 
 
+func GetMedal(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, Medal) {
+	c := appengine.NewContext(r)
+	if hasID == true {
+		var medal Medal
+		medalKey := GetEntityKeyByURLIDs(c, r, "Medal")
+
+		// Try to load the data into the Medal struct model
+		if err := datastore.Get(c, medalKey, &medal); err != nil {
+			panic(err.Error())
+		}
+		return medalKey, medal
+	} else {
+		var medals []Medal
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			q = GetModelEntities(c, "Medal", 1, params)
+		} else {
+			// Otherwise use query params from url
+			q = WebQueryEntities(c, r, "Medal", 1)
+		}
+		keys, err := q.GetAll(c, &medals)
+		if err != nil {
+			panic(err.Error())
+		}
+		// If nothing was found
+		if medals == nil {
+			return &datastore.Key{}, Medal{}
+		}
+
+		return keys[0], medals[0]
+	}
+}
+
 ///////////////////////// Multiple Item Queries ////////////////////////////
 
 
