@@ -30,7 +30,9 @@ var Panel = React.createClass({
                            panelHeadingContent={this.props.panelHeadingContent}/>
               <PanelBody panelBodyClasses={this.props.panelBodyClasses}
                          tableClasses={this.props.tableClasses}
-                         tableType={this.props.tableType}/>
+                         contentType={this.props.contentType}
+                         showStats={this.props.showStats}
+                         userID={this.props.userID}/>
           </div>
         </div>
       </div>
@@ -56,15 +58,18 @@ var PanelBody = React.createClass({
     var ppanelBodyClasses = this.props.panelBodyClasses;
     var panelBody = "panel-body";
     var panelBodyClasses = cx('panel-body', panelBody, ppanelBodyClasses);
-    // Decide whether or not to show a table
-    var tableElement;
-    if (this.props.tableClasses) {
-        tableElement = <Table tableClasses={this.props.tableClasses}
-                              tableType={this.props.tableType}/>;
+    // Decide what content to show in the panel body
+    var bodyContent;
+    if (this.props.contentType == "user-stats-table") {
+        bodyContent = <Table tableClasses={this.props.tableClasses}
+                             contentType={this.props.contentType}/>;
+    } else if (this.props.contentType == "user-show-stats") {
+        bodyContent = <UserShowStatsPanelBody showStats={this.props.showStats}
+                                              userID={this.props.userID}/>;
     }
     return (
       <div className={panelBodyClasses}>
-        {tableElement}
+        {bodyContent}
       </div>
     );
   }
@@ -78,7 +83,7 @@ var Table = React.createClass({
     var tableClasses = cx('table', table, ptableClasses);
     // Decide what table to show
     var tableBody;
-    if (this.props.tableType == "user-stats") {
+    if (this.props.contentType == "user-stats-table") {
         tableBody = <UserStatsTableBody userStatsColumnColor={this.props.userStatsColumnColor} />;
     }
     return (
@@ -239,6 +244,7 @@ var UserShowStats = React.createClass({
     });
   },
   render: function() {
+    userID = getUserFromPropsOrURL(this.props, 2);
     var showDate = new Date(this.state.data.created);
     var showDateFormatted = showDate.toString("ddd MMM. d, yyyy")
     return (
@@ -246,7 +252,76 @@ var UserShowStats = React.createClass({
              panelHeadingContent={showDateFormatted} panelHeadingClasses="x-large-font"
              panelBodyClasses="large-font black-font"
              tableClasses="table-condensed black-font"
-             tableType="user-show-stats"/>
+             contentType="user-show-stats"
+             showStats={this.props.showStats}
+             userID={userID}/>
+    );
+  }
+});
+
+var UserShowStatsPanelBody = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  componentDidMount: function() {
+    // Get the show
+    var showUrl = "/api/v1/show/" + this.props.showStats.show + "/";
+    $.ajax({
+      url: showUrl,
+      dataType: 'json',
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  render: function() {
+    var statElements = [];
+    // Create the user show stats
+    if (this.props.showStats) {
+        var showLink = "/leaderboards/show/" + this.state.data.id + "/";
+        console.log(this.state.data);
+        statElements.push(<div className="row"><div className="col-md-12">Points Earned: {this.props.showStats.points}</div></div>);
+        statElements.push(<div className="row"><div className="col-md-12"><a href={showLink}>Show Leaderboard</a></div></div>);
+    }
+
+    return (
+        <div>{statElements}</div>
+    );
+  }
+});
+
+var UserShowStatsSuggestions = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  componentDidMount: function() {
+    // Get the suggestions for the user
+    var userSuggestionsUrl = "/api/v1/suggestions/?user_id=" + this.props.userID + "&show=" + this.props.showID;
+    $.ajax({
+      url: userSuggestionsUrl,
+      dataType: 'json',
+      success: function(data) {
+        this.setState({suggestions: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  render: function() {
+    console.log(this.state.suggestions);
+    console.log(this.state.show);
+    var suggestionList = [];
+    // Create the user show stats
+    if (this.props.showStats) {
+        suggestionList.push(<div className="row"></div>);
+    }
+
+    return (
+        <div>{suggestionList}</div>
     );
   }
 });
@@ -271,6 +346,7 @@ var UserStats = React.createClass({
     });
   },
   render: function() {
+    userID = getUserFromPropsOrURL(this.props, 2);
     var showList;
     if (this.state.data){
         var showList = [];
@@ -286,7 +362,8 @@ var UserStats = React.createClass({
              panelHeadingContent="User Account" panelHeadingClasses="x-large-font"
              panelBodyClasses="large-font black-font"
              tableClasses="table-condensed black-font"
-             tableType="user-stats"/>
+             contentType="user-stats-table"
+             userID={userID}/>
       {showList}</div>
     );
   }

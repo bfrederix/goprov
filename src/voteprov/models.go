@@ -55,6 +55,7 @@ type VoteType struct {
 
 
 type Show struct {
+	ID              int64            `datastore:"ID" json:"id,omitempty"`
 	VoteLength      int64            `datastore:"vote_length" json:"vote_length,omitempty"`
 	ResultLength    int64            `datastore:"result_length" json:"result_length,omitempty"`
 	VoteOptions     int64            `datastore:"vote_options" json:"vote_options,omitempty"`
@@ -147,7 +148,7 @@ type LeaderboardEntry struct {
 	Wins        int64            `datastore:"wins" json:"wins,omitempty"`
 	Medals      []*datastore.Key `datastore:"medals" json:"medals,omitempty"`
 	Username    string           `json:"username"`
-	Suggestions int64              `json:"suggestions"`
+	Suggestions int64            `json:"suggestions"`
 }
 
 
