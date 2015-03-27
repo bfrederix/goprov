@@ -202,6 +202,7 @@ func GetShow(r *http.Request, hasID bool, params map[string]interface{}) (*datas
 		if err := datastore.Get(c, showKey, &show); err != nil {
 			panic(err.Error())
 		}
+		show.SetProperties(showKey)
 		return showKey, show
 	} else {
 		var shows []Show
@@ -221,7 +222,7 @@ func GetShow(r *http.Request, hasID bool, params map[string]interface{}) (*datas
 		if shows == nil {
 			return &datastore.Key{}, Show{}
 		}
-
+		shows[0].SetProperties(keys[0])
 		return keys[0], shows[0]
 	}
 }
@@ -386,6 +387,12 @@ func GetSuggestions(r *http.Request, params map[string]interface{}) ([]*datastor
 	keys, err := q.GetAll(c, &suggestions)
 	if err != nil {
         panic(err.Error())
+    }
+
+	// Set the non-model fields
+	for i := range suggestions {
+	    suggestion := &suggestions[i]
+        suggestion.SetProperties(keys[i])
     }
 
 	return keys, suggestions

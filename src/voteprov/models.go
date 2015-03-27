@@ -73,7 +73,14 @@ type Show struct {
 }
 
 
+func (show *Show) SetProperties(showKey *datastore.Key) {
+	// Get the show id in string format
+	show.ID = showKey.IntID()
+}
+
+
 type Suggestion struct {
+	ID             int64          `datastore:"ID" json:"id,omitempty"`
 	Show           *datastore.Key `datastore:"show" json:"show,omitempty"`
 	SuggestionPool *datastore.Key `datastore:"suggestion_pool" json:"suggestion_pool,omitempty"`
 	Used           bool           `datastore:"used" json:"used,omitempty"`
@@ -86,7 +93,13 @@ type Suggestion struct {
 	Created        time.Time      `datastore:"created" json:"-"`
 }
 
+
 // Need an md5 of session id to validate pre-show from (so we don't straight up give away the id)
+func (suggestion *Suggestion) SetProperties(suggestionKey *datastore.Key) {
+	// Get the show id in string format
+	suggestion.ID = suggestionKey.IntID()
+}
+
 
 type PreshowVote struct {
 	Show           *datastore.Key `datastore:"show" json:"show,omitempty"`

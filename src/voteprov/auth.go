@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"math/rand"
+	"html/template"
 	"appengine"
 	"appengine/user"
 	//"appengine/datastore"
@@ -42,7 +43,7 @@ func AdminRedirect(rw http.ResponseWriter, r *http.Request) {
 
 
 type DefaultContext struct {
-	ImagePath  string
+	ImagePath  template.JS
 	CSSPath    string
 	JSPath     string
 	AuthURL    string

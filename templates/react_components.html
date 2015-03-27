@@ -82,13 +82,17 @@ var Table = React.createClass({
     var table = "table";
     var tableClasses = cx('table', table, ptableClasses);
     // Decide what table to show
-    var tableBody;
+    var tableContents = [];
     if (this.props.contentType == "user-stats-table") {
-        tableBody = <UserStatsTableBody userStatsColumnColor={this.props.userStatsColumnColor} />;
+        tableContents.push(<UserStatsTableBody userStatsColumnColor={this.props.userStatsColumnColor} />);
+    } else if (this.props.contentType == "user-show-stats-table") {
+        tableContents.push(<thead><tr><th>Suggestions ({this.props.showStats.wins} Wins, {this.props.showStats.suggestions} Submitted):</th></tr></thead>);
+        tableContents.push(<UserShowStatsTableBody userID={this.props.userID}
+                                                   showID={this.props.showID} />);
     }
     return (
       <table className={tableClasses}>
-        {tableBody}
+        {tableContents}
       </table>
     );
   }
@@ -261,7 +265,7 @@ var UserShowStats = React.createClass({
 
 var UserShowStatsPanelBody = React.createClass({
   getInitialState: function() {
-    return {data: []};
+    return {data: null};
   },
   componentDidMount: function() {
     // Get the show
@@ -279,12 +283,20 @@ var UserShowStatsPanelBody = React.createClass({
   },
   render: function() {
     var statElements = [];
-    // Create the user show stats
-    if (this.props.showStats) {
-        var showLink = "/leaderboards/show/" + this.state.data.id + "/";
-        console.log(this.state.data);
+    // Create the user show stats (make sure the state is loaded first)
+    if (this.props.showStats && this.state.data !== null) {
+        var showID = this.state.data.id;
+        var showLink = "/leaderboards/show/" + showID + "/";
+        var recapLink = "/recap/" + this.state.data.id + "/";
         statElements.push(<div className="row"><div className="col-md-12">Points Earned: {this.props.showStats.points}</div></div>);
         statElements.push(<div className="row"><div className="col-md-12"><a href={showLink}>Show Leaderboard</a></div></div>);
+        statElements.push(<div className="row"><div className="col-md-12"><a href={recapLink}>Show Recap</a></div></div>);
+        statElements.push(<Table tableClasses="table-condensed black-font"
+                                 contentType="user-show-stats-table"
+                                 userID={this.props.userID}
+                                 showID={showID}
+                                 showStats={this.props.showStats} />);
+        statElements.push(<div className="row"><div className="col-md-12"><img src="/static/img/star-sprite.png" /> = winning suggestion</div></div>);
     }
 
     return (
@@ -293,7 +305,7 @@ var UserShowStatsPanelBody = React.createClass({
   }
 });
 
-var UserShowStatsSuggestions = React.createClass({
+var UserShowStatsTableBody = React.createClass({
   getInitialState: function() {
     return {data: []};
   },
@@ -304,7 +316,7 @@ var UserShowStatsSuggestions = React.createClass({
       url: userSuggestionsUrl,
       dataType: 'json',
       success: function(data) {
-        this.setState({suggestions: data});
+        this.setState({data: data});
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -312,16 +324,31 @@ var UserShowStatsSuggestions = React.createClass({
     });
   },
   render: function() {
-    console.log(this.state.suggestions);
-    console.log(this.state.show);
+    var showID = this.props.showID;
     var suggestionList = [];
-    // Create the user show stats
-    if (this.props.showStats) {
-        suggestionList.push(<div className="row"></div>);
-    }
-
+    // Create the suggestion list
+    this.state.data.map(function (suggestion) {
+      var suggestionClass, starIMG, suggestionDisplay;
+      // Used a different class if the suggestion won
+      if (suggestion.used) {
+          suggestionClass = "success";
+          starIMG =  <img src="{{.DC.ImagePath}}star-sprite.png" />;
+      } else {
+          suggestionClass = "active";
+      }
+      console.log(suggestion.voted_on);
+      // If the suggestion was voted on during the show
+      if (suggestion.voted_on === true) {
+          suggestionDisplay = <a href={suggestionUrl}>{suggestion.value}{starIMG}</a>;
+      } else {
+          suggestionDisplay = suggestion.value;
+      }
+      var suggestionUrl = "/recap/" + showID + "/#" + suggestion.id;
+      suggestionList.push(<tr><td className={suggestionClass}>{suggestionDisplay}</td></tr>);
+      return suggestionList;
+    });
     return (
-        <div>{suggestionList}</div>
+        <tbody>{suggestionList}</tbody>
     );
   }
 });
