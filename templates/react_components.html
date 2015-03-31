@@ -13,6 +13,13 @@ function getUserFromPropsOrURL(props, position){
     return userID;
 }
 
+function getURLParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
 var Panel = React.createClass({
   render: function() {
     var cx = React.addons.classSet;
@@ -336,7 +343,6 @@ var UserShowStatsTableBody = React.createClass({
       } else {
           suggestionClass = "active";
       }
-      console.log(suggestion.voted_on);
       // If the suggestion was voted on during the show
       if (suggestion.voted_on === true) {
           suggestionDisplay = <a href={suggestionUrl}>{suggestion.value}{starIMG}</a>;

@@ -7,6 +7,7 @@ import (
     "time"
 	"strconv"
 	"net/http"
+	"appengine"
 	"appengine/datastore"
 )
 
@@ -53,29 +54,140 @@ type VoteType struct {
 	CurrentInit         time.Time      `datastore:"current_init" json:"current_init,omitempty"`
 }
 
+// Option display for voting
+type OptionDisplay struct {
+	OptionKey string `json:"option_key,omitempty"`
+	PlayerKey string `json:"player_key,omitempty"`
+}
+
+// Used to capture the current state of the show
+type CurrentState struct {
+	State              string           `json:"state,omitempty"`
+	Display            string           `json:"display,omitempty"`
+	DisplayName        string           `json:"display_name,omitempty"`
+	Style              string           `json:"style,omitempty"`
+	Interval           int64            `json:"interval,omitempty"`
+	CurrentTime        time.Time        `json:"current_time,omitempty"`
+	DisplayEndTime     time.Time        `json:"display_end_time,omitempty"`
+	Speedup            bool             `json:"speedup,omitempty"`
+	RemainingIntervals map[string]int64 `json:"remaining_intervals,omitempty"`
+	OptionDisplay      []OptionDisplay  `json:"options,omitempty"`
+}
 
 type Show struct {
-	ID              int64            `datastore:"ID" json:"id,omitempty"`
-	VoteLength      int64            `datastore:"vote_length" json:"vote_length,omitempty"`
-	ResultLength    int64            `datastore:"result_length" json:"result_length,omitempty"`
-	VoteOptions     int64            `datastore:"vote_options" json:"vote_options,omitempty"`
-	Timezone        string           `datastore:"timezone" json:"timezone,omitempty"`
-	VoteTypes       []*datastore.Key `datastore:"vote_types" json:"vote_types,omitempty"`
-	Players         []*datastore.Key `datastore:"players" json:"players,omitempty"`
-	PlayerPool      []*datastore.Key `datastore:"player_pool" json:"player_pool,omitempty"`
-	Created         time.Time        `datastore:"created" json:"created,-"`
-	Archived        bool             `datastore:"archived" json:"archived,omitempty"`
-	CurrentVoteType *datastore.Key   `datastore:"current_vote_type" json:"current_vote_type,omitempty"`
-	CurrentVoteInit time.Time        `datastore:"current_vote_init" json:"-"`
-	RecapType       *datastore.Key   `datastore:"recap_type" json:"recap_type,omitempty"`
-	RecapInit       time.Time        `datastore:"recap_init" json:"-"`
-	Locked          bool             `datastore:"locked" json:"locked,omitempty"`
+	ID                  int64            `datastore:"ID" json:"id,omitempty"`
+	VoteLength          int64            `datastore:"vote_length" json:"vote_length,omitempty"`
+	ResultLength        int64            `datastore:"result_length" json:"result_length,omitempty"`
+	VoteOptions         int64            `datastore:"vote_options" json:"vote_options,omitempty"`
+	Timezone            string           `datastore:"timezone" json:"timezone,omitempty"`
+	VoteTypes           []*datastore.Key `datastore:"vote_types" json:"vote_types,omitempty"`
+	Players             []*datastore.Key `datastore:"players" json:"players,omitempty"`
+	PlayerPool          []*datastore.Key `datastore:"player_pool" json:"player_pool,omitempty"`
+	Created             time.Time        `datastore:"created" json:"created,-"`
+	Archived            bool             `datastore:"archived" json:"archived,omitempty"`
+	CurrentVoteType     *datastore.Key   `datastore:"current_vote_type" json:"current_vote_type,omitempty"`
+	CurrentVoteInit     time.Time        `datastore:"current_vote_init" json:"-"`
+	RecapType           *datastore.Key   `datastore:"recap_type" json:"recap_type,omitempty"`
+	RecapInit           time.Time        `datastore:"recap_init" json:"-"`
+	Locked              bool             `datastore:"locked" json:"locked,omitempty"`
+	CurrentShowInterval *datastore.Key   `json:"current_show_interval,omitempty"`
+	CurrentState        CurrentState     `json:"current_state,omitempty"`
 }
 
 
-func (show *Show) SetProperties(showKey *datastore.Key) {
+func GetCurrentShowInterval(show *Show, showKey *datastore.Key, r *http.Request) (*datastore.Key, ShowInterval) {
+	var showIntervalKey *datastore.Key
+	var showInterval ShowInterval
+	// Get query params
+	qParams := MapQuery(r)
+	var voteTypeID string
+	var ok bool
+	voteTypeInterface := qParams["vote_type"]
+	// Get the current vote type if it exists
+	if voteTypeID, ok = voteTypeInterface.(string); !ok {
+		// Get the vote type id in string format
+		voteTypeID = strconv.FormatInt(show.CurrentVoteType.IntID(), 10)
+	}
+	// Only set current show interval if there's a vote type
+	if len(voteTypeID) > 0 {
+		var interval *int64
+		showIDString := strconv.FormatInt(show.ID, 10)
+		// Get the current show interval if it exists in the query
+		if intervalInterface, ok := qParams["interval"]; ok {
+			intervalString := intervalInterface.(string)
+			*interval, _ = strconv.ParseInt(intervalString, 0, 64)
+		} else {
+			// Otherwise, get the current interval from the vote type
+			voteTypeParams := map[string]interface{}{
+				"vote_type": voteTypeID,
+				"show": showIDString,
+			}
+			_, voteType := GetVoteType(r, false, voteTypeParams)
+			interval = &voteType.CurrentInterval
+		}
+		// if a current interval exists
+		if interval != nil {
+			intervalString := strconv.FormatInt(*interval, 10)
+			showIntervalParams := map[string]interface{}{"show": showIDString,
+				                                         "vote_type": voteTypeID,
+												         "interval": intervalString}
+			showIntervalKey, showInterval = GetShowInterval(r, false, showIntervalParams)
+		}
+	}
+	return showIntervalKey, showInterval
+}
+
+
+func (show *Show) SetProperties(c appengine.Context, showKey *datastore.Key, r *http.Request) {
+	//var currentShowInterval ShowInterval
+	var voteType VoteType
 	// Get the show id in string format
 	show.ID = showKey.IntID()
+	// Get the current show interval key and values
+	show.CurrentShowInterval, _ = GetCurrentShowInterval(show, showKey, r)
+	currentTime := time.Now().UTC()
+	// Try to load the data into the vote type struct model
+	if err := datastore.Get(c, show.CurrentVoteType, &voteType); err != nil {
+		panic(err.Error())
+	}
+	// Set vote type non-model properties
+	// Initialize state variables
+	currentDisplay := "default"
+	currentShowState := "default"
+	var currentDisplayName string
+	var currentStyle string
+	var currentInterval int64
+	var displayEndTime time.Time
+	// If the current time is after the current vote init
+	if currentTime.After(show.CurrentVoteInit) {
+		votingEndTime := show.CurrentVoteInit.Add(time.Duration(show.VoteLength)*time.Second)
+		resultEndTime := votingEndTime.Add(time.Duration(show.ResultLength)*time.Second)
+		// If we're currently in the voting period
+		if currentTime.Before(votingEndTime) {
+			currentDisplay = "voting"
+			currentShowState = voteType.Name
+			currentDisplayName = voteType.DisplayName
+			currentStyle = voteType.Style
+			currentInterval = voteType.CurrentInterval
+			displayEndTime = votingEndTime
+		} else if currentTime.Before(resultEndTime) {
+			// Otherwise if we're in the display period
+			currentDisplay = "result"
+			currentShowState = voteType.Name
+			currentDisplayName = voteType.DisplayName
+			currentStyle = voteType.Style
+			currentInterval = voteType.CurrentInterval
+			displayEndTime = resultEndTime
+		}
+	}
+	show.CurrentState = CurrentState{State: currentShowState,
+									 Display: currentDisplay,
+									 DisplayName: currentDisplayName,
+									 Style: currentStyle,
+									 Interval: currentInterval,
+									 CurrentTime: currentTime,
+		                             DisplayEndTime: displayEndTime,
+									 }
 }
 
 
@@ -173,7 +285,6 @@ func (le *LeaderboardEntry) SetProperties(r *http.Request) {
 	le.Username = userProfile.Username
 	// Get the show id in string format
 	showIDString := strconv.FormatInt(le.Show.IntID(), 10)
-	//log.Println("Leaderboard Show: ", showIDString)
 	suggestionParams := map[string]interface{}{
 		"user_id": le.UserID,
 		"show": showIDString,

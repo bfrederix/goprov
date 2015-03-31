@@ -65,6 +65,8 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 		"user_id",
 		"email",
 		"show",
+		"vote_type",
+		"interval",
 		"archived",
 		"order_by_created",
 		"order_by_show_date",
@@ -93,10 +95,18 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 	if email, ok := params["email"]; ok {
 		q = q.Filter("email =", email)
 	}
+	if interval, ok := params["interval"]; ok {
+		q = q.Filter("interval =", interval)
+	}
 	// If a show id/key was specified
 	if showID, ok := params["show"]; ok {
 		showKey := GetEntityKeyByIDs(c, "Show", showID.(string))
 		q = q.Filter("show =", showKey)
+	}
+	// If a vote type id/key was specified
+	if voteTypeID, ok := params["vote_type"]; ok {
+		voteTypeKey := GetEntityKeyByIDs(c, "VoteType", voteTypeID.(string))
+		q = q.Filter("vote_type =", voteTypeKey)
 	}
 	if params["archived"] != nil {
 		archived, err := strconv.ParseBool(params["archived"].(string))
@@ -133,8 +143,8 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 }
 
 
-func WebQueryEntities(c appengine.Context, r *http.Request, modelType string, limit int) *datastore.Query {
-	// Get the query parameters
+func MapQuery(r *http.Request) map[string]interface{} {
+	// Map the query parameters
 	queryParams := r.URL.Query()
 	params := make(map[string]interface{}, len(queryParams))
 	if queryParams != nil {
@@ -143,6 +153,13 @@ func WebQueryEntities(c appengine.Context, r *http.Request, modelType string, li
 			params[k] = v[0]
 		}
 	}
+	return params
+}
+
+
+func WebQueryEntities(c appengine.Context, r *http.Request, modelType string, limit int) *datastore.Query {
+	// Get the query parameters
+	params := MapQuery(r)
 	q := GetModelEntities(c, modelType, limit, params)
 	return q
 }
@@ -192,6 +209,42 @@ func GetPlayer(r *http.Request, hasID bool, params map[string]interface{}) (*dat
 }
 
 
+func GetVoteType(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, VoteType) {
+	c := appengine.NewContext(r)
+	if hasID == true {
+		var voteType VoteType
+		voteTypeKey := GetEntityKeyByURLIDs(c, r, "VoteType")
+
+		// Try to load the data into the VoteType struct model
+		if err := datastore.Get(c, voteTypeKey, &voteType); err != nil {
+			panic(err.Error())
+		}
+		//voteType.SetProperties(voteTypeKey, r)
+		return voteTypeKey, voteType
+	} else {
+		var voteTypes []VoteType
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			q = GetModelEntities(c, "VoteType", 1, params)
+		} else {
+			// Otherwise use query params from url
+			q = WebQueryEntities(c, r, "VoteType", 1)
+		}
+		keys, err := q.GetAll(c, &voteTypes)
+		if err != nil {
+			panic(err.Error())
+		}
+		// If nothing was found
+		if voteTypes == nil {
+			return &datastore.Key{}, VoteType{}
+		}
+		//voteTypes[0].SetProperties(keys[0], r)
+		return keys[0], voteTypes[0]
+	}
+}
+
+
 func GetShow(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, Show) {
 	c := appengine.NewContext(r)
 	if hasID == true {
@@ -202,7 +255,7 @@ func GetShow(r *http.Request, hasID bool, params map[string]interface{}) (*datas
 		if err := datastore.Get(c, showKey, &show); err != nil {
 			panic(err.Error())
 		}
-		show.SetProperties(showKey)
+		show.SetProperties(c, showKey, r)
 		return showKey, show
 	} else {
 		var shows []Show
@@ -222,7 +275,7 @@ func GetShow(r *http.Request, hasID bool, params map[string]interface{}) (*datas
 		if shows == nil {
 			return &datastore.Key{}, Show{}
 		}
-		shows[0].SetProperties(keys[0])
+		shows[0].SetProperties(c, keys[0], r)
 		return keys[0], shows[0]
 	}
 }
@@ -262,6 +315,41 @@ func GetUserProfiles(r *http.Request, hasID bool, params map[string]interface{})
 		// Set the non-model fields
 		//userProfiles[0].SetProperties()
 		return keys[0], userProfiles[0]
+	}
+}
+
+
+func GetShowInterval(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, ShowInterval) {
+	c := appengine.NewContext(r)
+	if hasID == true {
+		var showInterval ShowInterval
+		showIntervalKey := GetEntityKeyByURLIDs(c, r, "ShowInterval")
+
+		// Try to load the data into the ShowInterval struct model
+		if err := datastore.Get(c, showIntervalKey, &showInterval); err != nil {
+			panic(err.Error())
+		}
+		return showIntervalKey, showInterval
+	} else {
+		var showIntervals []ShowInterval
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			q = GetModelEntities(c, "ShowInterval", 1, params)
+		} else {
+			// Otherwise use query params from url
+			q = WebQueryEntities(c, r, "ShowInterval", 1)
+		}
+		keys, err := q.GetAll(c, &showIntervals)
+		if err != nil {
+			panic(err.Error())
+		}
+		// If nothing was found
+		if showIntervals == nil {
+			return &datastore.Key{}, ShowInterval{}
+		}
+
+		return keys[0], showIntervals[0]
 	}
 }
 
@@ -341,6 +429,12 @@ func GetShows(r *http.Request, params map[string]interface{}) ([]*datastore.Key,
 	keys, err := q.GetAll(c, &shows)
 	if err != nil {
         panic(err.Error())
+    }
+	// Set the non-model fields
+	for i := range shows {
+	    show := &shows[i]
+
+        show.SetProperties(c, keys[i], r)
     }
 
 	return keys, shows
@@ -480,13 +574,13 @@ func GetLeaderboardStats(r *http.Request, userID interface{}, startDate interfac
     	var show Show
     	datastore.Get(c, leaderboardEntry.Show, &show)
 		// If start and end date were specified
-        if _, ok := startDate.(time.Time); ok {
-			if _, ok := endDate.(time.Time); ok {
+        if startDateTime, ok := startDate.(time.Time); ok {
+			if endDateTime, ok := endDate.(time.Time); ok {
 				// If the entry falls within the date span
-				// THIS IS BROKEN: if startDate.(time.Time) <= show.Created && show.Created <= endDate {
-				log.Println("leaderboardEntry.Show.Created: ", show.Created)
-				AddToUserTotal(&userTotals, *leaderboardEntry)
-				//}
+				if show.Created.After(startDateTime) && show.Created.Before(endDateTime) || show.Created.Equal(startDateTime) {
+					log.Println("leaderboardEntry.Show.Created: ", show.Created)
+					AddToUserTotal(&userTotals, *leaderboardEntry)
+				}
 			}
 		} else {
 			log.Println("leaderboardEntry.Show.Created: ", show.Created)
