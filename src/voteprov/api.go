@@ -42,6 +42,12 @@ func ShowAPIGetID(rw http.ResponseWriter, r *http.Request) {
 }
 
 
+func VoteTypeAPIGetID(rw http.ResponseWriter, r *http.Request) {
+	_, voteType := GetVoteType(r, true, nil)
+	json.NewEncoder(rw).Encode(voteType)
+}
+
+
 func ShowsAPIGet(rw http.ResponseWriter, r *http.Request) {
 	_, shows := GetShows(r, nil)
 	json.NewEncoder(rw).Encode(shows)

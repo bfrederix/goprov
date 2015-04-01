@@ -50,9 +50,67 @@ type VoteType struct {
 	ButtonColor         string         `datastore:"button_color" json:"button_color,omitempty"`
 
 	// Dynamic
-	CurrentInterval     int64          `datastore:"current_interval" json:"current_interval,omitempty"`
+	CurrentInterval     int64         `datastore:"current_interval" json:"current_interval,omitempty"`
 	CurrentInit         time.Time      `datastore:"current_init" json:"current_init,omitempty"`
+
+	// Non-model properties
+	NextInterval                int64            `json:"next_interval,omitempty"`
+	IntervalGap                 int              `json:"interval_gap,omitempty"`
+	RemainingIntervals          int64            `json:"remaining_intervals,omitempty"`
+	CurrentVotedItem            *VotedItem        `json:"current_voted_item,omitempty"`
+	RandomizedUnusedSuggestions []*datastore.Key `json:"-"`
+	TestOptions                 []*datastore.Key `json:"test_options,omitempty"`
 }
+
+
+func GetCurrentVotedItem(voteType *VoteType, voteTypeKey *datastore.Key, r *http.Request, show *Show) *VotedItem {
+	if show != nil { //voteType.CurrentInterval != nil
+		showIDString := strconv.FormatInt(show.ID, 10)
+		voteTypeIDString := strconv.FormatInt(voteTypeKey.IntID(), 10)
+		intervalString := strconv.FormatInt(voteType.CurrentInterval, 10)
+		votedItemParams := map[string]interface{}{"show": showIDString,
+			                                      "vote_type": voteTypeIDString,
+			                                      "interval": intervalString}
+		_, currentVoted := GetVotedItem(r, false, votedItemParams)
+		return &currentVoted
+	}
+	return nil
+}
+
+
+func GetNextInterval(voteType *VoteType, currentVotedItem *VotedItem, votedRequired bool) int64 {
+	// if a current interval exists
+	if voteType.CurrentInterval > -1 {
+		// Loop through all intervals
+		for i := range voteType.Intervals {
+			// If the interval is the same as the current interval
+			if voteType.CurrentInterval == voteType.Intervals[i] {
+				if currentVotedItem != nil || votedRequired == false {
+					nextIndex := i+1
+					// If the next interval index is within range
+					if nextIndex < len(voteType.Intervals) - 1 {
+						return voteType.Intervals[nextIndex]
+					}
+				} else {
+					return voteType.CurrentInterval
+				}
+			}
+		}
+	} else if len(voteType.Intervals) > 0 {
+		// Assume it's the first interval
+		return voteType.Intervals[0]
+	}
+	return -1
+}
+
+
+func (voteType *VoteType) SetProperties(voteTypeKey *datastore.Key, r *http.Request, show *Show) {
+	// Get the Current voted item
+	voteType.CurrentVotedItem = GetCurrentVotedItem(voteType, voteTypeKey, r, show)
+	// Get the next interval
+	voteType.NextInterval = GetNextInterval(voteType, voteType.CurrentVotedItem, true)
+}
+
 
 // Option display for voting
 type OptionDisplay struct {
@@ -110,12 +168,12 @@ func GetCurrentShowInterval(show *Show, showKey *datastore.Key, r *http.Request)
 	}
 	// Only set current show interval if there's a vote type
 	if len(voteTypeID) > 0 {
-		var interval *int64
+		var interval int64
 		showIDString := strconv.FormatInt(show.ID, 10)
 		// Get the current show interval if it exists in the query
 		if intervalInterface, ok := qParams["interval"]; ok {
 			intervalString := intervalInterface.(string)
-			*interval, _ = strconv.ParseInt(intervalString, 0, 64)
+			interval, _ = strconv.ParseInt(intervalString, 0, 64)
 		} else {
 			// Otherwise, get the current interval from the vote type
 			voteTypeParams := map[string]interface{}{
@@ -123,15 +181,21 @@ func GetCurrentShowInterval(show *Show, showKey *datastore.Key, r *http.Request)
 				"show": showIDString,
 			}
 			_, voteType := GetVoteType(r, false, voteTypeParams)
-			interval = &voteType.CurrentInterval
+			interval = voteType.CurrentInterval
 		}
 		// if a current interval exists
-		if interval != nil {
-			intervalString := strconv.FormatInt(*interval, 10)
+		if interval > -1 {
+			intervalString := strconv.FormatInt(interval, 10)
 			showIntervalParams := map[string]interface{}{"show": showIDString,
 				                                         "vote_type": voteTypeID,
 												         "interval": intervalString}
 			showIntervalKey, showInterval = GetShowInterval(r, false, showIntervalParams)
+			// Make sure the show interval exists, or return no key
+			if showInterval.Show == nil {
+				return nil, showInterval
+			} else {
+				return showIntervalKey, showInterval
+			}
 		}
 	}
 	return showIntervalKey, showInterval
@@ -139,18 +203,14 @@ func GetCurrentShowInterval(show *Show, showKey *datastore.Key, r *http.Request)
 
 
 func (show *Show) SetProperties(c appengine.Context, showKey *datastore.Key, r *http.Request) {
-	//var currentShowInterval ShowInterval
 	var voteType VoteType
 	// Get the show id in string format
 	show.ID = showKey.IntID()
 	// Get the current show interval key and values
 	show.CurrentShowInterval, _ = GetCurrentShowInterval(show, showKey, r)
 	currentTime := time.Now().UTC()
-	// Try to load the data into the vote type struct model
-	if err := datastore.Get(c, show.CurrentVoteType, &voteType); err != nil {
-		panic(err.Error())
-	}
-	// Set vote type non-model properties
+	voteTypeParams := map[string]interface{}{"key": show.CurrentVoteType}
+	show.CurrentVoteType, voteType = GetVoteType(r, false, voteTypeParams)
 	// Initialize state variables
 	currentDisplay := "default"
 	currentShowState := "default"
@@ -178,16 +238,19 @@ func (show *Show) SetProperties(c appengine.Context, showKey *datastore.Key, r *
 			currentStyle = voteType.Style
 			currentInterval = voteType.CurrentInterval
 			displayEndTime = resultEndTime
+			// Make sure the current voted item exists
+			// Make sure the voted item's suggestion was marked as the winning
 		}
 	}
 	show.CurrentState = CurrentState{State: currentShowState,
 									 Display: currentDisplay,
 									 DisplayName: currentDisplayName,
 									 Style: currentStyle,
-									 Interval: currentInterval,
 									 CurrentTime: currentTime,
-		                             DisplayEndTime: displayEndTime,
-									 }
+		                             DisplayEndTime: displayEndTime}
+	if currentInterval > -1 {
+		show.CurrentState.Interval = currentInterval
+	}
 }
 
 

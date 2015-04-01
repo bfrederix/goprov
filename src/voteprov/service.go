@@ -60,6 +60,7 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 	q := datastore.NewQuery(modelType)
 	log.Println("Query Params: ", params)
 	paramsAllowed := []string{
+		"key",
         "name",
 		"current_session",
 		"user_id",
@@ -81,6 +82,10 @@ func GetModelEntities(c appengine.Context, modelType string, limit int, params m
 	// If empty query parameters, return the full query results
 	if params == nil {
 		return q
+	}
+	// If a key was specified
+	if key, ok := params["key"]; ok {
+		q = q.Filter("__key__ =", key.(*datastore.Key))
 	}
 	// If a certain params were specified
 	if name, ok := params["name"]; ok {
@@ -219,7 +224,7 @@ func GetVoteType(r *http.Request, hasID bool, params map[string]interface{}) (*d
 		if err := datastore.Get(c, voteTypeKey, &voteType); err != nil {
 			panic(err.Error())
 		}
-		//voteType.SetProperties(voteTypeKey, r)
+		voteType.SetProperties(voteTypeKey, r, nil)
 		return voteTypeKey, voteType
 	} else {
 		var voteTypes []VoteType
@@ -239,7 +244,12 @@ func GetVoteType(r *http.Request, hasID bool, params map[string]interface{}) (*d
 		if voteTypes == nil {
 			return &datastore.Key{}, VoteType{}
 		}
-		//voteTypes[0].SetProperties(keys[0], r)
+		// If the show entity was specified
+		if showEntity, ok := params["showEntity"]; ok {
+			voteTypes[0].SetProperties(keys[0], r, showEntity.(*Show))
+		} else {
+			voteTypes[0].SetProperties(keys[0], r, nil)
+		}
 		return keys[0], voteTypes[0]
 	}
 }
@@ -350,6 +360,41 @@ func GetShowInterval(r *http.Request, hasID bool, params map[string]interface{})
 		}
 
 		return keys[0], showIntervals[0]
+	}
+}
+
+
+func GetVotedItem(r *http.Request, hasID bool, params map[string]interface{}) (*datastore.Key, VotedItem) {
+	c := appengine.NewContext(r)
+	if hasID == true {
+		var votedItem VotedItem
+		votedItemKey := GetEntityKeyByURLIDs(c, r, "VotedItem")
+
+		// Try to load the data into the VotedItem struct model
+		if err := datastore.Get(c, votedItemKey, &votedItem); err != nil {
+			panic(err.Error())
+		}
+		return votedItemKey, votedItem
+	} else {
+		var votedItems []VotedItem
+		var q *datastore.Query
+		// If parameters were specified
+		if params != nil {
+			q = GetModelEntities(c, "VotedItem", 1, params)
+		} else {
+			// Otherwise use query params from url
+			q = WebQueryEntities(c, r, "VotedItem", 1)
+		}
+		keys, err := q.GetAll(c, &votedItems)
+		if err != nil {
+			panic(err.Error())
+		}
+		// If nothing was found
+		if votedItems == nil {
+			return &datastore.Key{}, VotedItem{}
+		}
+
+		return keys[0], votedItems[0]
 	}
 }
 
