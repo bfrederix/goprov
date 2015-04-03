@@ -1,14 +1,18 @@
 {{define "react_components"}}
 
+function getURLPathArgByPosition(position) {
+    // Default to getting the userID from the url
+    var pathArray = window.location.pathname.split( '/' );
+    return pathArray[position];
+}
+
 function getUserFromPropsOrURL(props, position){
     // Get the user id, default from url path
     var userID;
     if (props.userID) {
         userID = props.userID;
     } else {
-        // Default to getting the userID from the url
-        var pathArray = window.location.pathname.split( '/' );
-        userID = pathArray[position];
+        userID = getURLPathArgByPosition(position);
     }
     return userID;
 }
@@ -34,12 +38,12 @@ var Panel = React.createClass({
         <div className={colClasses}>
           <div className={panelClasses}>
               <PanelHeader panelHeadingClasses={this.props.panelHeadingClasses}
-                           panelHeadingContent={this.props.panelHeadingContent}/>
+                           panelHeadingContent={this.props.panelHeadingContent} />
               <PanelBody panelBodyClasses={this.props.panelBodyClasses}
                          tableClasses={this.props.tableClasses}
                          contentType={this.props.contentType}
                          showStats={this.props.showStats}
-                         userID={this.props.userID}/>
+                         userID={this.props.userID} />
           </div>
         </div>
       </div>
@@ -69,10 +73,10 @@ var PanelBody = React.createClass({
     var bodyContent;
     if (this.props.contentType == "user-stats-table") {
         bodyContent = <Table tableClasses={this.props.tableClasses}
-                             contentType={this.props.contentType}/>;
+                             contentType={this.props.contentType} />;
     } else if (this.props.contentType == "user-show-stats") {
         bodyContent = <UserShowStatsPanelBody showStats={this.props.showStats}
-                                              userID={this.props.userID}/>;
+                                              userID={this.props.userID} />;
     }
     return (
       <div className={panelBodyClasses}>
@@ -175,7 +179,7 @@ var UserStatsTableBody = React.createClass({
     return {data: []};
   },
   componentDidMount: function() {
-    userID = getUserFromPropsOrURL(this.props, 2);
+    var userID = getUserFromPropsOrURL(this.props, 2);
     // Get the leaderboard stats for the user
     var leaderboardStatsUrl = "/api/v1/leaderboards/user/" + userID + "/";
     $.ajax({
@@ -190,7 +194,7 @@ var UserStatsTableBody = React.createClass({
     });
   },
   render: function() {
-    userID = getUserFromPropsOrURL(this.props, 2);
+    var userID = getUserFromPropsOrURL(this.props, 2);
     // Decide the stat column color
     var columnColor;
     if (this.props.userStatsColumnColor) {
@@ -240,7 +244,7 @@ var UserShowStats = React.createClass({
     return {data: []};
   },
   componentDidMount: function() {
-    userID = getUserFromPropsOrURL(this.props, 2);
+    var userID = getUserFromPropsOrURL(this.props, 2);
     // Get the leaderboard stats for the user
     var leaderboardStatsUrl = "/api/v1/show/" + this.props.showStats.show + "/";
     $.ajax({
@@ -255,7 +259,7 @@ var UserShowStats = React.createClass({
     });
   },
   render: function() {
-    userID = getUserFromPropsOrURL(this.props, 2);
+    var userID = getUserFromPropsOrURL(this.props, 2);
     var showDate = new Date(this.state.data.created);
     var showDateFormatted = showDate.toString("ddd MMM. d, yyyy")
     return (
@@ -364,7 +368,7 @@ var UserStats = React.createClass({
     return {data: []};
   },
   componentDidMount: function() {
-    userID = getUserFromPropsOrURL(this.props, 2);
+    var userID = getUserFromPropsOrURL(this.props, 2);
     // Get the leaderboard stats for the user
     var leaderboardStatsUrl = "/api/v1/leaderboard_entries/?user_id=" + userID + "&order_by_show_date=True";
     $.ajax({
@@ -379,7 +383,7 @@ var UserStats = React.createClass({
     });
   },
   render: function() {
-    userID = getUserFromPropsOrURL(this.props, 2);
+    var userID = getUserFromPropsOrURL(this.props, 2);
     var showList;
     if (this.state.data){
         var showList = [];
@@ -396,9 +400,139 @@ var UserStats = React.createClass({
              panelBodyClasses="large-font black-font"
              tableClasses="table-condensed black-font"
              contentType="user-stats-table"
-             userID={userID}/>
+             userID={userID} />
       {showList}</div>
     );
+  }
+});
+
+var ShowDisplay = React.createClass({
+  getInitialState: function() {
+    // Hide the nav bar
+	$("#top-nav-bar").hide();
+    return {data: []};
+  },
+  loadShowData: function() {
+    var showID = getURLPathArgByPosition(3);
+    var showURL = "/api/v1/show/" + showID + "/";
+    $.ajax({
+      url: showURL,
+      dataType: 'json',
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  componentDidMount: function() {
+    this.loadShowData();
+    setInterval(this.loadShowData, this.props.pollInterval);
+  },
+  render: function() {
+    var showID = getURLPathArgByPosition(3);
+    var state;
+    state = getURLParameterByName("state") || undefined;
+    // Make sure the current state exists
+    if (this.state.data && this.state.data.current_state !== undefined || state !== undefined){
+        if (state == undefined) {
+            state = this.state.data.current_state['state'];
+        }
+        var showStateDisplay;
+        // Create the user stats
+        if (state == "default") {
+            showStateDisplay = <ShowDefaultDisplay showData={this.state.data} />;
+        } else if (state == "all-players") {
+
+        } else if (state == "player-pool") {
+
+        } else if (state == "player-options") {
+            showStateDisplay = <ShowPlayerOptionsDisplay showData={this.state.data} />;
+        } else if (state == "options" || state == "test") {
+
+        }
+    }
+    return (
+        <div>
+            <div className="row">
+                <div className="col-sm-11">
+                    <h3 className="text-center background-blue">
+                        <a href="/" className="white-link">Host Domain</a>
+                    </h3>
+                </div>
+            </div>
+            {showStateDisplay}
+        </div>
+    );
+  }
+});
+
+var ShowDefaultDisplay = React.createClass({
+  render: function() {
+    if (this.props.showData) {
+        var leaderboardURL = "/leaderboards/show/" + this.props.showData.id + "/";
+        // Create the intervals remaining buttons
+        var remainingVoteTypes = [];
+        this.props.showData.vote_types.map(function (voteType) {
+            remainingVoteTypes.push(<RemainingIntervalsButton voteType={voteType} />);
+            remainingVoteTypes.push(<br/>);
+            return remainingVoteTypes;
+        });
+        return (
+            <div className="col-md-5 col-md-offset-3">
+                <a className="text-center" href={leaderboardURL}>
+                    <div className="btn btn-default btn-block btn-lg home-show-btn">Leaderboard</div>
+                </a>
+                <br/>
+                <div className="row">
+                    <div className="col-md-8 col-md-offset-2">
+                        <img src="{{.DC.ImagePath}}adventure-prov-logo-large.png" className="img-responsive img-thumbnail" />
+                    </div>
+                </div>
+                {remainingVoteTypes}
+            </div>
+        );
+    } else {
+        return (<div></div>);
+    }
+  }
+});
+
+var ShowPlayerOptionsDisplay = React.createClass({
+  render: function() {
+    return (<div>Player-Options</div>);
+  }
+});
+
+var RemainingIntervalsButton = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  componentDidMount: function() {
+    // Get the vote type data
+    var voteTypeUrl = "/api/v1/vote_type/" + this.props.voteType + "/";
+    $.ajax({
+      url: voteTypeUrl,
+      dataType: 'json',
+      success: function(data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  render: function() {
+    // Make sure the current state exists and is not a "test"
+    if (this.state.data && this.state.data.name != "test") {
+        var buttonStyle = {backgroundColor: this.state.data.button_color};
+        return (
+            <button className="btn btn-block btn-lg white-input x-large-font" style={buttonStyle}>{this.state.data.display_name} Remaining: {this.state.data.remaining_intervals}</button>
+        );
+    } else {
+        return (<div></div>);
+    }
   }
 });
 

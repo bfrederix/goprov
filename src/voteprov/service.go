@@ -26,6 +26,24 @@ func stringInSlice(a string, list []string) bool {
 }
 
 
+func intPos(slice []int64, value int64) int {
+	for p, v := range slice {
+		log.Println("pv: ", p, v, value)
+        if (v == value) {
+            return p
+        }
+    }
+    return -1
+}
+
+
+func GetMostRecentShow(r *http.Request,) (*datastore.Key, Show) {
+	showParams := map[string]interface{}{"order_by_created": true}
+	showKey, show := GetShow(r, false, showParams)
+	return showKey, show
+}
+
+
 func GetEntityKeyByIDs(c appengine.Context, modelType string, entityIdString string) (*datastore.Key) {
 	// Entity ID string to int
 	entityId, err := strconv.ParseInt(entityIdString, 0, 64)
@@ -302,7 +320,7 @@ func GetUserProfiles(r *http.Request, hasID bool, params map[string]interface{})
 			panic(err.Error())
 		}
 		// Make sure the image path is set
-		//userProfile.SetProperties()
+		userProfile.SetProperties()
 		return userProfileKey, userProfile
 	} else {
 		var userProfiles []UserProfile
@@ -323,7 +341,7 @@ func GetUserProfiles(r *http.Request, hasID bool, params map[string]interface{})
 			return &datastore.Key{}, UserProfile{}
 		}
 		// Set the non-model fields
-		//userProfiles[0].SetProperties()
+		userProfiles[0].SetProperties()
 		return keys[0], userProfiles[0]
 	}
 }
@@ -572,12 +590,9 @@ const levelSize int64 = 30
 func AddToUserTotal(userTotals *map[string]*UserTotal, leaderboardEntry LeaderboardEntry) {
 	// If there isn't an entry for this user yet
 	if _, ok := (*userTotals)[leaderboardEntry.UserID]; !ok {
-		var username string
 		var medals []*datastore.Key
-		s := strings.Split(leaderboardEntry.Username, "@")
-		username = s[0]
 		ut := &UserTotal{
-			Username: username,
+			Username: leaderboardEntry.Username,
 			UserID: leaderboardEntry.UserID,
 			Points: 0,
 			Wins: 0,
@@ -585,7 +600,6 @@ func AddToUserTotal(userTotals *map[string]*UserTotal, leaderboardEntry Leaderbo
 			Suggestions: 0,
 			Level: 0,
 		}
-		log.Println("leaderboardEntry.UserID: ", leaderboardEntry.UserID)
 		(*userTotals)[leaderboardEntry.UserID] = ut
 	}
 	// Add the points, wins, medals, and suggestions for this user

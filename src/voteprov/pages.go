@@ -74,6 +74,36 @@ func MedalsPage(rw http.ResponseWriter, r *http.Request) {
 /////////////////////////// Admin Pages ///////////////////////////
 
 
+func ShowDisplayPage(rw http.ResponseWriter, r *http.Request) {
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	// Redirect if not admin
+	if !bc.DC.IsAdmin {
+		AdminRedirect(rw, r)
+	}
+	bc.DC.Page = "show_display"
+    err := templates.ExecuteTemplate(rw, "show_display", &bc)
+	if err != nil {
+        http.Error(rw, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+
+func ShowControllerPage(rw http.ResponseWriter, r *http.Request) {
+	bc := BaseContext{}
+	AuthContext(rw, r, &bc.DC)
+	// Redirect if not admin
+	if !bc.DC.IsAdmin {
+		AdminRedirect(rw, r)
+	}
+	bc.DC.Page = "show_controller"
+    err := templates.ExecuteTemplate(rw, "show_controller", &bc)
+	if err != nil {
+        http.Error(rw, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+
 func InstructionPage(rw http.ResponseWriter, r *http.Request) {
 	bc := BaseContext{}
 	AuthContext(rw, r, &bc.DC)

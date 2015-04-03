@@ -35,6 +35,8 @@ func CreateHandler() *mux.Router {
 
 	// Admin Pages
 	a := r.PathPrefix("/admin").Subrouter()
+	a.HandleFunc("/show_display/{show_id:[0-9]+}/", ShowDisplayPage)
+	a.HandleFunc("/show_controller/{show_id:[0-9]+}/", ShowControllerPage)
 	a.HandleFunc("/pre_show/", InstructionPage)
 	a.HandleFunc("/create_show/", CreateShowPage)
 	a.HandleFunc("/vote_types/", VoteTypesPage)

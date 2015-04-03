@@ -3,6 +3,10 @@
  * These are the styles for the content of the homepage
  */
 
+.background-blue {
+    background-color:#003D7A;
+}
+
 .show-link a {
 	text-align: center;
     display: block;

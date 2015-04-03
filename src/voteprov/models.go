@@ -5,6 +5,7 @@ import (
 	"fmt"
 	//"log"
     "time"
+	"strings"
 	"strconv"
 	"net/http"
 	"appengine"
@@ -50,16 +51,17 @@ type VoteType struct {
 	ButtonColor         string         `datastore:"button_color" json:"button_color,omitempty"`
 
 	// Dynamic
-	CurrentInterval     int64         `datastore:"current_interval" json:"current_interval,omitempty"`
+	CurrentInterval     int64          `datastore:"current_interval" json:"current_interval,omitempty"`
 	CurrentInit         time.Time      `datastore:"current_init" json:"current_init,omitempty"`
 
 	// Non-model properties
 	NextInterval                int64            `json:"next_interval,omitempty"`
 	IntervalGap                 int              `json:"interval_gap,omitempty"`
-	RemainingIntervals          int64            `json:"remaining_intervals,omitempty"`
-	CurrentVotedItem            *VotedItem        `json:"current_voted_item,omitempty"`
+	CurrentVotedItem            *VotedItem       `json:"current_voted_item,omitempty"`
+	RemainingIntervals          int              `json:"remaining_intervals,omitempty"`
 	RandomizedUnusedSuggestions []*datastore.Key `json:"-"`
 	TestOptions                 []*datastore.Key `json:"test_options,omitempty"`
+	Speedup                     bool             `json:"speedup,omitempty"`
 }
 
 
@@ -103,20 +105,27 @@ func GetNextInterval(voteType *VoteType, currentVotedItem *VotedItem, votedRequi
 	return -1
 }
 
+func GetRemainingIntervals(voteType *VoteType) {
+	voteType.RemainingIntervals = 0
+	if voteType.CurrentInterval == -1 {
+		voteType.RemainingIntervals = len(voteType.Intervals)
+	} else {
+		intervalIndex := intPos(voteType.Intervals, voteType.CurrentInterval)
+		if intervalIndex != -1 {
+			voteType.RemainingIntervals = len(voteType.Intervals) - intervalIndex - 1
+		}
+	}
+}
 
 func (voteType *VoteType) SetProperties(voteTypeKey *datastore.Key, r *http.Request, show *Show) {
 	// Get the Current voted item
 	voteType.CurrentVotedItem = GetCurrentVotedItem(voteType, voteTypeKey, r, show)
 	// Get the next interval
 	voteType.NextInterval = GetNextInterval(voteType, voteType.CurrentVotedItem, true)
+	// Get the remaning intervals
+	GetRemainingIntervals(voteType)
 }
 
-
-// Option display for voting
-type OptionDisplay struct {
-	OptionKey string `json:"option_key,omitempty"`
-	PlayerKey string `json:"player_key,omitempty"`
-}
 
 // Used to capture the current state of the show
 type CurrentState struct {
@@ -127,9 +136,6 @@ type CurrentState struct {
 	Interval           int64            `json:"interval,omitempty"`
 	CurrentTime        time.Time        `json:"current_time,omitempty"`
 	DisplayEndTime     time.Time        `json:"display_end_time,omitempty"`
-	Speedup            bool             `json:"speedup,omitempty"`
-	RemainingIntervals map[string]int64 `json:"remaining_intervals,omitempty"`
-	OptionDisplay      []OptionDisplay  `json:"options,omitempty"`
 }
 
 type Show struct {
@@ -345,7 +351,7 @@ func (le *LeaderboardEntry) SetProperties(r *http.Request) {
 	userProfileParams := map[string]interface{}{"user_id": le.UserID}
 	_, userProfile := GetUserProfiles(r, false, userProfileParams)
 	// Set the Username
-	le.Username = userProfile.Username
+	le.Username = userProfile.StrippedUsername
 	// Get the show id in string format
 	showIDString := strconv.FormatInt(le.Show.IntID(), 10)
 	suggestionParams := map[string]interface{}{
@@ -359,16 +365,22 @@ func (le *LeaderboardEntry) SetProperties(r *http.Request) {
 
 
 type UserProfile struct {
-	UserID         string    `datastore:"user_id" json:"user_id,omitempty"`
-	Username       string    `datastore:"username" json:"username,omitempty"`
-	StripUsername  string    `datastore:"strip_username" json:"strip_username,omitempty"`
-	Email          string    `datastore:"email" json:"-"`
-	LoginType      string    `datastore:"login_type" json:"-"`
-	CurrentSession string    `datastore:"current_session" json:"-"`
-	FBAccessToken  string    `datastore:"fb_access_token" json:"-"`
-	Created        time.Time `datastore:"created" json:"-"`
+	UserID           string    `datastore:"user_id" json:"user_id,omitempty"`
+	Username         string    `datastore:"username" json:"username,omitempty"`
+	StripUsername    string    `datastore:"strip_username" json:"strip_username,omitempty"`
+	Email            string    `datastore:"email" json:"-"`
+	LoginType        string    `datastore:"login_type" json:"-"`
+	CurrentSession   string    `datastore:"current_session" json:"-"`
+	FBAccessToken    string    `datastore:"fb_access_token" json:"-"`
+	Created          time.Time `datastore:"created" json:"-"`
+	//non-model properties
+	StrippedUsername string    `json:"stripped_username,omitempty"`
 }
 
+func (up *UserProfile) SetProperties() {
+	s := strings.Split(up.Username, "@")
+	up.StrippedUsername = s[0]
+}
 
 type EmailOptOut struct {
 	Email string `datastore:"email" json:"email"`
