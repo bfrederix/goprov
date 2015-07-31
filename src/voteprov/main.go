@@ -3,8 +3,8 @@ package main
 import (
     "net/http"
     "log"
-	"github.com/gorilla/mux"
-	"voteprov/api"
+    "github.com/gorilla/mux"
+    "voteprov/api"
 )
 
 
@@ -39,5 +39,5 @@ func CreateHandler() *mux.Router {
 
 func main() {
 	http.Handle("/", CreateHandler())
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":4000", nil))
 }

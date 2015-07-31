@@ -1,0 +1,94 @@
+# Install go
+apt-get install gccgo-go
+
+# Add needed Go environment variables
+vim /etc/profile
+export GOPATH=/usr/local/goprov
+export PATH=$PATH:$GOPATH/bin
+
+# Create upstart file
+vim /etc/init/voteprov.conf
+
+# Upstart config
+  # When to start the service
+  start on runlevel [2345]
+
+  # When to stop the service
+  stop on runlevel [016]
+
+  # If dies, restart it
+  respawn
+
+  setgid voteprov
+  setuid voteprov
+  chdir /usr/local/goprov/src/voteprov
+  exec ./voteprov 1>>/var/log/voteprov/stdout.log 2>>/var/log/voteprov/error.log
+
+# Create log files
+mkdir /var/log/voteprov
+touch /var/log/voteprov/error.log
+touch /var/log/voteprov/stdout.log
+
+# Change ownership of log files
+chown voteprov:voteprov /var/log/voteprov
+chown voteprov:voteprov /var/log/voteprov/*
+
+# Build the binary file
+cd src/voteprov/
+go build
+
+# Run the upstart service
+service voteprov restart
+
+# Install haproxy
+apt-get install haproxy
+
+# Enable haproxy
+vim /etc/default/haproxy
+
+# Set enabled to 1
+ENABLED=1
+
+# Edit haproxy config
+vim /etc/haproxy/haproxy.cfg
+
+# haproxy configuration
+  global
+        log     127.0.0.1       local0
+        maxconn 10000
+        user    haproxy
+        group   haproxy
+        daemon
+
+  defaults
+        log     global
+        mode    http
+        option  httplog
+        option  dontlognull
+        retries 3
+        timeout connect 5000
+        timeout client  50000
+        timeout server  50000
+
+  frontend http
+        bind :80
+        acl  is_stats  hdr(host)       -i      hastats.voteprov.com
+        use_backend    stats   if      is_stats
+        default_backend        voteprov
+        capture        request header Host     len     20
+        capture        request header Referer  len     50
+
+  backend voteprov
+        server  main    127.0.0.1:4000
+
+  backend stats
+       mode     http
+       stats    enable
+       stats    scope   http
+       stats    scope   myapp
+       stats    realm   Haproxy\ Statistics
+       stats    uri     /
+       stats    auth    username:password
+
+# Start haproxy
+service haproxy start

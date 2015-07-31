@@ -23,3 +23,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Ignore binary
+src/voteprov/voteprov
+src/github.com/lib/pq
