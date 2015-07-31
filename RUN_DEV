@@ -1,0 +1,8 @@
+# Golang in your .bash_profile
+export GOPATH=$HOME/home_projects/goprov
+export PATH=$PATH:$GOPATH/bin
+
+# Run goprov
+cd /Users/brandon.fredericks/home_projects/goprov
+go install voteprov
+voteprov

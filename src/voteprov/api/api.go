@@ -12,7 +12,7 @@ import (
 func Test(rw http.ResponseWriter, r *http.Request) {
 	db := data.DBConnection()
 	log.Println("Test: ", db)
-	json.NewEncoder(rw).Encode("Hello World!")
+	json.NewEncoder(rw).Encode("Hello There!")
 }
 
 
